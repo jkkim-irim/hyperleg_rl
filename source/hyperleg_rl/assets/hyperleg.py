@@ -21,6 +21,7 @@ coulomb·tanh + viscous friction (Table I) is subtracted from the result.
 See ``dvcc/02_actuator_irim.md`` for derivation and design notes.
 """
 
+import math
 from pathlib import Path
 
 import isaaclab.sim as sim_utils
@@ -58,14 +59,21 @@ def _leg_actuator_cfg(side: str) -> CoupledLegActuatorCfg:
         ],
         # Joint-space PD (paper eq. 4 form)
         stiffness={
-            f"{p}HY": 100.0, f"{p}HR": 150.0, f"{p}HP": 150.0,
-            f"{p}KN": 200.0, f"{p}AK": 40.0,
+            f"{p}HY": 50.0, f"{p}HR": 50.0, f"{p}HP": 50.0,
+            f"{p}KN": 100.0, f"{p}AK": 30.0,
             f"{p}FT": 20.0, f"{p}TO": 15.0,
         },
         damping={
             f"{p}HY": 4.0, f"{p}HR": 5.0, f"{p}HP": 5.0,
-            f"{p}KN": 6.0, f"{p}AK": 2.0,
-            f"{p}FT": 1.0, f"{p}TO": 0.8,
+            f"{p}KN": 10.0, f"{p}AK": 3.0,
+            f"{p}FT": 2.0, f"{p}TO": 1.0,
+        },
+        # Joint-space armature (PhysX adds to mass-matrix diagonal). Uniform 0.01
+        # as a stability baseline; refine per-joint with γ²·I_rotor if needed.
+        armature={
+            f"{p}HY": 0.01, f"{p}HR": 0.01, f"{p}HP": 0.01,
+            f"{p}KN": 0.01, f"{p}AK": 0.01,
+            f"{p}FT": 0.01, f"{p}TO": 0.01,
         },
         # Joint-side coulomb + viscous friction (paper Table I, eq. 5)
         friction_coulomb={
@@ -81,16 +89,16 @@ def _leg_actuator_cfg(side: str) -> CoupledLegActuatorCfg:
         activation_vel=0.1,
         # Cooperative Actuation Jacobian (canonical [HY HR HP KN AK FT TO])
         jacobian_joint_to_motor=_J_PER_LEG,
-        # Motor-side continuous torque [Nm] (paper Table I "Max torque [Nm]" motor row)
+        # Motor-side continuous torque [Nm] (τ_cont on the DC torque-speed envelope).
+        # Typical DC rating: τ_cont ≈ τ_stall/2 (conservative: /3). KN/ankles follow the same rule.
         motor_effort_limit={
-            f"{p}HY": 5.04, f"{p}HR": 5.04, f"{p}HP": 5.04,
+            f"{p}HY": 2.52, f"{p}HR": 2.52, f"{p}HP": 2.52,  # 5.04/2
             f"{p}KN": 2.68,
             f"{p}AK": 1.63, f"{p}FT": 1.63, f"{p}TO": 1.63,
         },
-        # Motor-side stall (peak) torque [Nm] = joint "Max torque with CA" / dominant gear.
-        # Hip: 126/25 = 5.04 (stall == continuous, no CA boost on direct-drive cycloid).
-        # Knee: 212/31.11 = 6.81. Ankles: 111.7/(2·26.69) reading shared, take per-motor 2.09.
-        # Toe: 46.8/21.27 = 2.20.
+        # Motor-side stall (peak) torque [Nm] at ω=0 (τ_stall on the envelope).
+        # Hip cycloid 25:1 → 5.04 Nm motor ≈ 126 Nm joint peak; τ_cont above → ~63 Nm joint sustained.
+        # Knee: 212/31.11 = 6.81. Ankles: 111.7/(2·26.69) → 2.09 per motor. Toe: 46.8/21.27 = 2.20.
         motor_saturation_effort={
             f"{p}HY": 5.04, f"{p}HR": 5.04, f"{p}HP": 5.04,
             f"{p}KN": 6.81,
@@ -125,13 +133,18 @@ HYPERLEG_CFG = ArticulationCfg(
         ),
     ),
     init_state=ArticulationCfg.InitialStateCfg(
-        pos=(0.0, 0.0, 0.95),
-        joint_pos={".*": 0.0},
+        pos=(0.0, 0.0, 0.94),
+        joint_pos={
+            ".*_HP": math.radians(-10.0),
+            ".*_KN": math.radians(20.0),
+            ".*_AK": math.radians(9.5),
+        },
         joint_vel={".*": 0.0},
     ),
     actuators={
         "left_leg": _leg_actuator_cfg("L"),
         "right_leg": _leg_actuator_cfg("R"),
     },
+    soft_joint_pos_limit_factor=0.95,
 )
 """HyperLeg biped articulation config (UsdFileCfg + per-leg CoupledLegActuator)."""
