@@ -125,7 +125,7 @@ HYPERLEG_CFG = ArticulationCfg(
         ),
     ),
     init_state=ArticulationCfg.InitialStateCfg(
-        pos=(0.0, 0.0, 0.94),
+        pos=(0.0, 0.0, 0.95),
         joint_pos={".*": 0.0},
         joint_vel={".*": 0.0},
     ),

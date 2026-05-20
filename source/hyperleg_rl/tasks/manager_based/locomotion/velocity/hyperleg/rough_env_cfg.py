@@ -128,7 +128,7 @@ class HyperLegActionsCfg:
         asset_name="robot",
         joint_names=["L_.*", "R_.*"],
         scale=0.5,
-        alpha=1.0,
+        alpha=0.1,
     )
 
 
@@ -180,12 +180,12 @@ class HyperLegObservationsCfg:
         root_quat_w = ObsTerm(func=mdp.root_quat_w)
         root_lin_vel_w = ObsTerm(func=mdp.root_lin_vel_w)
         root_ang_vel_w = ObsTerm(func=mdp.root_ang_vel_w)
-        # Per-foot contact bools, ordered [lft, lto, rft, rto]
+        # Per-foot contact bools, ordered [l_ft, l_to, r_ft, r_to]
         feet_contact = ObsTerm(
             func=feet_contact_bool,
             params={
                 "sensor_cfg": SceneEntityCfg(
-                    "contact_forces", body_names=[".*lft$", ".*lto$", ".*rft$", ".*rto$"]
+                    "contact_forces", body_names=["l_ft", "l_to", "r_ft", "r_to"]
                 ),
                 "threshold": 1.0,
             },
@@ -241,7 +241,7 @@ class HyperLegEventsCfg:
         func=mdp.randomize_rigid_body_mass,
         mode="startup",
         params={
-            "asset_cfg": SceneEntityCfg("robot", body_names=[".*pelvis$"]),
+            "asset_cfg": SceneEntityCfg("robot", body_names=["torso"]),
             "mass_distribution_params": (-5.0, 5.0),
             "operation": "add",
         },
@@ -250,7 +250,7 @@ class HyperLegEventsCfg:
         func=mdp.randomize_rigid_body_com,
         mode="startup",
         params={
-            "asset_cfg": SceneEntityCfg("robot", body_names=[".*pelvis$"]),
+            "asset_cfg": SceneEntityCfg("robot", body_names=["torso"]),
             "com_range": {"x": (-0.05, 0.05), "y": (-0.05, 0.05), "z": (-0.01, 0.01)},
         },
     )
@@ -293,7 +293,7 @@ class HyperLegTerminationsCfg:
     pelvis_contact = DoneTerm(
         func=mdp.illegal_contact,
         params={
-            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=[".*pelvis$"]),
+            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=["torso"]),
             "threshold": 1.0,
         },
     )
@@ -321,9 +321,9 @@ class HyperLegRoughEnvCfg(ManagerBasedRLEnvCfg):
     sim: SimulationCfg = SimulationCfg(physx=PHYSX_CFG)
 
     def __post_init__(self):
-        self.decimation = 20
+        self.decimation = 4
         self.episode_length_s = 20.0
-        self.sim.dt = 0.001
+        self.sim.dt = 0.005
         self.sim.render_interval = self.decimation
         self.sim.physics_material = self.scene.terrain.physics_material
         if self.scene.contact_forces is not None:
