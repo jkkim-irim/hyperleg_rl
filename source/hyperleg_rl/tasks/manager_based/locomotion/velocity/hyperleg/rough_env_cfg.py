@@ -10,13 +10,6 @@ import math
 from typing import TYPE_CHECKING
 
 import torch
-import warp as wp
-
-from isaaclab_physx.physics import PhysxCfg
-from isaaclab_physx.sensors import ContactSensorCfg
-
-if TYPE_CHECKING:
-    from isaaclab_physx.sensors import ContactSensor
 
 import isaaclab.sim as sim_utils
 from isaaclab.assets import AssetBaseCfg
@@ -29,8 +22,13 @@ from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.scene import InteractiveSceneCfg
-from isaaclab.sim import SimulationCfg
+from isaaclab.sensors import ContactSensorCfg
+from isaaclab.sim import PhysxCfg, SimulationCfg
 from isaaclab.terrains import TerrainImporterCfg
+
+if TYPE_CHECKING:
+    from isaaclab.sensors import ContactSensor
+
 from isaaclab.utils.configclass import configclass
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR, ISAACLAB_NUCLEUS_DIR
 from isaaclab.utils.noise import UniformNoiseCfg as Unoise
@@ -58,7 +56,7 @@ def feet_contact_bool(env, sensor_cfg: SceneEntityCfg, threshold: float = 1.0) -
         else 0.0.
     """
     sensor: "ContactSensor" = env.scene.sensors[sensor_cfg.name]
-    forces = wp.to_torch(sensor.data.net_forces_w)
+    forces = sensor.data.net_forces_w
     if sensor_cfg.body_ids is not None and sensor_cfg.body_ids != slice(None):
         forces = forces[:, sensor_cfg.body_ids, :]
     return (torch.linalg.norm(forces, dim=-1) > threshold).float()
@@ -320,7 +318,7 @@ class HyperLegRoughEnvCfg(ManagerBasedRLEnvCfg):
     terminations: HyperLegTerminationsCfg = HyperLegTerminationsCfg()
     events: HyperLegEventsCfg = HyperLegEventsCfg()
     curriculum: HyperLegCurriculumCfg = HyperLegCurriculumCfg()
-    sim: SimulationCfg = SimulationCfg(physics=PHYSX_CFG)
+    sim: SimulationCfg = SimulationCfg(physx=PHYSX_CFG)
 
     def __post_init__(self):
         self.decimation = 20

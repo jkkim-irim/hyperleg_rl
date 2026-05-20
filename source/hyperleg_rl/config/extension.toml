@@ -12,7 +12,6 @@ keywords = ["extension", "isaaclab", "physx", "hyperleg", "locomotion"]
 [dependencies]
 "isaaclab" = {}
 "isaaclab_assets" = {}
-"isaaclab_physx" = {}
 "isaaclab_rl" = {}
 "isaaclab_tasks" = {}
 
