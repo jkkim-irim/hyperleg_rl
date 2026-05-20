@@ -1,0 +1,1495 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="ToeLockModel">
+  <link
+    name="torso">
+    <inertial>
+      <origin
+        xyz="8.5075E-19 4.7754E-18 -0.0125"
+        rpy="0 0 0" />
+      <mass
+        value="0.7095" />
+      <inertia
+        ixx="0.0040278"
+        ixy="-1.3734E-18"
+        ixz="1.4544E-20"
+        iyy="0.00093655"
+        iyz="3.3863E-20"
+        izz="0.0048904" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/torso.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0.6 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/torso.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="r_hy">
+    <inertial>
+      <origin
+        xyz="-0.030764 8.8216E-05 0.046404"
+        rpy="0 0 0" />
+      <mass
+        value="0.36274" />
+      <inertia
+        ixx="0.0010582"
+        ixy="6.1155E-07"
+        ixz="0.00030675"
+        iyy="0.0012161"
+        iyz="1.2449E-06"
+        izz="0.00068184" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/r_hy.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0.6 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/r_hy.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="R_HY"
+    type="revolute">
+    <origin
+      xyz="0 -0.09 -0.025"
+      rpy="3.1416 0 0" />
+    <parent
+      link="torso" />
+    <child
+      link="r_hy" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-1"
+      upper="1"
+      effort="1"
+      velocity="1" />
+  </joint>
+  <link
+    name="r_hr">
+    <inertial>
+      <origin
+        xyz="0 0 0.08858"
+        rpy="0 0 0" />
+      <mass
+        value="1.1197" />
+      <inertia
+        ixx="0.0024466"
+        ixy="-8.817E-21"
+        ixz="1.7716E-19"
+        iyy="0.0025581"
+        iyz="2.0424E-19"
+        izz="0.0023292" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/r_hr.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.50588 0.71373 0.76863 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/r_hr.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="R_HR"
+    type="revolute">
+    <origin
+      xyz="-0.065 -0.0001 0.13"
+      rpy="0 1.5708 0" />
+    <parent
+      link="r_hy" />
+    <child
+      link="r_hr" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-1"
+      upper="1"
+      effort="1"
+      velocity="1" />
+  </joint>
+  <link
+    name="r_hp">
+    <inertial>
+      <origin
+        xyz="-0.19164 -0.025564 -1.3878E-17"
+        rpy="0 0 0" />
+      <mass
+        value="4.3838" />
+      <inertia
+        ixx="0.013597"
+        ixy="0.0026248"
+        ixz="2.2179E-18"
+        iyy="0.039726"
+        iyz="-4.3803E-19"
+        izz="0.038733" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/r_hp.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.8 0.8 0.2 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/r_hp.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="R_HP"
+    type="revolute">
+    <origin
+      xyz="0 0 0.09"
+      rpy="-1.5708 0 0" />
+    <parent
+      link="r_hr" />
+    <child
+      link="r_hp" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="-1"
+      upper="1"
+      effort="1"
+      velocity="1" />
+  </joint>
+  <link
+    name="r_kn">
+    <inertial>
+      <origin
+        xyz="-0.0132 -0.12192 0"
+        rpy="0 0 0" />
+      <mass
+        value="2.7781" />
+      <inertia
+        ixx="0.028471"
+        ixy="0.002151"
+        ixz="3.4022E-19"
+        iyy="0.0044377"
+        iyz="1.1352E-18"
+        izz="0.029309" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/r_kn.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.76471 0.87843 0.74118 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/r_kn.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="R_KN"
+    type="revolute">
+    <origin
+      xyz="-0.35 0 0"
+      rpy="3.1416 0 1.5708" />
+    <parent
+      link="r_hp" />
+    <child
+      link="r_kn" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-1"
+      upper="1"
+      effort="1"
+      velocity="1" />
+  </joint>
+  <link
+    name="r_ak">
+    <inertial>
+      <origin
+        xyz="-0.0066092 0.0038158 -1.3878E-17"
+        rpy="0 0 0" />
+      <mass
+        value="0.057183" />
+      <inertia
+        ixx="3.2419E-05"
+        ixy="1.0068E-06"
+        ixz="2.5549E-22"
+        iyy="3.3581E-05"
+        iyz="-2.1967E-22"
+        izz="1.0658E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/r_ak.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.4 0.2 0.8 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/r_ak.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="R_AK"
+    type="revolute">
+    <origin
+      xyz="0 -0.36 0"
+      rpy="0 0 0" />
+    <parent
+      link="r_kn" />
+    <child
+      link="r_ak" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="-1"
+      upper="1"
+      effort="1"
+      velocity="1" />
+  </joint>
+  <link
+    name="r_ft">
+    <inertial>
+      <origin
+        xyz="-0.043727 6.5593E-11 -0.012271"
+        rpy="0 0 0" />
+      <mass
+        value="0.16769" />
+      <inertia
+        ixx="0.00046347"
+        ixy="1.1839E-10"
+        ixz="0.00019384"
+        iyy="0.00056609"
+        iyz="7.793E-11"
+        izz="0.00017259" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/r_ft.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.86275 0.8902 0.60392 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/r_ft.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="R_FT"
+    type="revolute">
+    <origin
+      xyz="-0.028579 0.0165 0"
+      rpy="-1.5708 0 1.0472" />
+    <parent
+      link="r_ak" />
+    <child
+      link="r_ft" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="-1"
+      upper="1"
+      effort="1"
+      velocity="1" />
+  </joint>
+  <link
+    name="r_hill">
+    <inertial>
+      <origin
+        xyz="0.017317 1.0258E-08 0.0038485"
+        rpy="0 0 0" />
+      <mass
+        value="0.053724" />
+      <inertia
+        ixx="1.3873E-05"
+        ixy="-3.5235E-10"
+        ixz="3.2749E-06"
+        iyy="2.0885E-05"
+        iyz="-1.3453E-10"
+        izz="2.8983E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/r_hill.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.2549 0.21569 0.19216 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/r_hill.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="R_HILL"
+    type="fixed">
+    <origin
+      xyz="-0.03162 0 -0.11123"
+      rpy="0 -1.0472 3.1416" />
+    <parent
+      link="r_ft" />
+    <child
+      link="r_hill" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="r_to">
+    <inertial>
+      <origin
+        xyz="-0.031098 -0.019401 2.3592E-16"
+        rpy="0 0 0" />
+      <mass
+        value="0.10163" />
+      <inertia
+        ixx="9.6374E-05"
+        ixy="-2.937E-06"
+        ixz="-6.4054E-19"
+        iyy="0.00015597"
+        iyz="-2.6322E-19"
+        izz="7.4864E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/r_to.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/r_to.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="R_TO"
+    type="fixed">
+    <origin
+      xyz="-0.083481 0 0.048593"
+      rpy="1.5708 1.0472 0" />
+    <parent
+      link="r_ft" />
+    <child
+      link="r_to" />
+    <axis
+      xyz="0 0 0" />
+    <limit
+      lower="-1"
+      upper="1"
+      effort="1"
+      velocity="1" />
+  </joint>
+  <link
+    name="r_tp">
+    <inertial>
+      <origin
+        xyz="0.0063897 -1.2165E-08 0.0097515"
+        rpy="0 0 0" />
+      <mass
+        value="0.085652" />
+      <inertia
+        ixx="4.9901E-05"
+        ixy="-5.8448E-09"
+        ixz="-1.7648E-06"
+        iyy="5.3727E-05"
+        iyz="-8.9586E-11"
+        izz="9.9684E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/r_tp.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.2549 0.21569 0.19216 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/r_tp.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="R_TP"
+    type="fixed">
+    <origin
+      xyz="-0.028 -0.043 0"
+      rpy="1.5708 0 3.1416" />
+    <parent
+      link="r_to" />
+    <child
+      link="r_tp" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="R_point1">
+    <inertial>
+      <origin
+        xyz="2.7756E-17 0 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.0063706" />
+      <inertia
+        ixx="3.3701E-07"
+        ixy="-5.3718E-24"
+        ixz="-3.1524E-39"
+        iyy="3.3701E-07"
+        iyz="4.3838E-39"
+        izz="3.3701E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/R_point1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/R_point1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="R_point1"
+    type="fixed">
+    <origin
+      xyz="-0.037428 0.033 0.0075"
+      rpy="0 0 0" />
+    <parent
+      link="r_tp" />
+    <child
+      link="R_point1" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="R_point2">
+    <inertial>
+      <origin
+        xyz="2.7756E-17 -1.3878E-17 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.0063706" />
+      <inertia
+        ixx="3.3701E-07"
+        ixy="7.6101E-24"
+        ixz="4.2244E-39"
+        iyy="3.3701E-07"
+        iyz="1.1828E-38"
+        izz="3.3701E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/R_point2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/R_point2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="R_point2"
+    type="fixed">
+    <origin
+      xyz="0.04 -0.032693 0.0075"
+      rpy="0 0 0" />
+    <parent
+      link="r_tp" />
+    <child
+      link="R_point2" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="R_point3">
+    <inertial>
+      <origin
+        xyz="2.7756E-17 0 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.0063706" />
+      <inertia
+        ixx="3.3701E-07"
+        ixy="-1.9485E-23"
+        ixz="-1.7562E-39"
+        iyy="3.3701E-07"
+        iyz="3.3341E-39"
+        izz="3.3701E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/R_point3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/R_point3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="R_point3"
+    type="fixed">
+    <origin
+      xyz="0.04 0.032693 0.0075"
+      rpy="0 0 0" />
+    <parent
+      link="r_tp" />
+    <child
+      link="R_point3" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="R_point4">
+    <inertial>
+      <origin
+        xyz="2.7756E-17 0 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.0063706" />
+      <inertia
+        ixx="3.3701E-07"
+        ixy="3.805E-24"
+        ixz="8.4489E-40"
+        iyy="3.3701E-07"
+        iyz="0"
+        izz="3.3701E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/R_point4.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/R_point4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="R_point4"
+    type="fixed">
+    <origin
+      xyz="-0.037428 -0.0333 0.0075"
+      rpy="0 0 0" />
+    <parent
+      link="r_tp" />
+    <child
+      link="R_point4" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="l_hy">
+    <inertial>
+      <origin
+        xyz="0.00021127 -0.030763 -0.046404"
+        rpy="0 0 0" />
+      <mass
+        value="0.36274" />
+      <inertia
+        ixx="0.0012161"
+        ixy="1.2432E-06"
+        ixz="-1.7953E-08"
+        iyy="0.0010582"
+        iyz="-0.00030675"
+        izz="0.00068184" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/l_hy.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0.6 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/l_hy.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="L_HY"
+    type="revolute">
+    <origin
+      xyz="0 0.09 -0.025"
+      rpy="0 0 -1.5748" />
+    <parent
+      link="torso" />
+    <child
+      link="l_hy" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="-1"
+      upper="1"
+      effort="1"
+      velocity="1" />
+  </joint>
+  <link
+    name="l_hr">
+    <inertial>
+      <origin
+        xyz="0 0 0.08858"
+        rpy="0 0 0" />
+      <mass
+        value="1.1197" />
+      <inertia
+        ixx="0.0025581"
+        ixy="3.7545E-20"
+        ixz="-1.5728E-19"
+        iyy="0.0024466"
+        iyz="1.2519E-19"
+        izz="0.0023292" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/l_hr.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.50588 0.71373 0.76863 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/l_hr.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="L_HR"
+    type="revolute">
+    <origin
+      xyz="0.00026 -0.064999 -0.13"
+      rpy="1.5708 0 -3.1376" />
+    <parent
+      link="l_hy" />
+    <child
+      link="l_hr" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-1"
+      upper="1"
+      effort="1"
+      velocity="1" />
+  </joint>
+  <link
+    name="l_hp">
+    <inertial>
+      <origin
+        xyz="-0.025564 0.19164 1.3878E-17"
+        rpy="0 0 0" />
+      <mass
+        value="4.3838" />
+      <inertia
+        ixx="0.039726"
+        ixy="-0.0026248"
+        ixz="-3.4954E-19"
+        iyy="0.013597"
+        iyz="-7.2572E-19"
+        izz="0.038733" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/l_hp.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.8 0.8 0.2 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/l_hp.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="L_HP"
+    type="revolute">
+    <origin
+      xyz="-0.0001 0 0.09"
+      rpy="3.1416 1.5708 0" />
+    <parent
+      link="l_hr" />
+    <child
+      link="l_hp" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="-1"
+      upper="1"
+      effort="1"
+      velocity="1" />
+  </joint>
+  <link
+    name="l_kn">
+    <inertial>
+      <origin
+        xyz="-0.0132 0.12192 -1.3878E-17"
+        rpy="0 0 0" />
+      <mass
+        value="2.7781" />
+      <inertia
+        ixx="0.028471"
+        ixy="-0.002151"
+        ixz="-5.7343E-19"
+        iyy="0.0044377"
+        iyz="2.7591E-19"
+        izz="0.029309" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/l_kn.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.76471 0.87843 0.74118 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/l_kn.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="L_KN"
+    type="revolute">
+    <origin
+      xyz="0 0.35 0"
+      rpy="0 0 0" />
+    <parent
+      link="l_hp" />
+    <child
+      link="l_kn" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="-1"
+      upper="1"
+      effort="1"
+      velocity="1" />
+  </joint>
+  <link
+    name="l_ak">
+    <inertial>
+      <origin
+        xyz="-0.0066092 0.0038158 -1.3878E-17"
+        rpy="0 0 0" />
+      <mass
+        value="0.057183" />
+      <inertia
+        ixx="3.2419E-05"
+        ixy="1.0068E-06"
+        ixz="2.3654E-20"
+        iyy="3.3581E-05"
+        iyz="-1.5237E-20"
+        izz="1.0658E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/l_ak.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.4 0.2 0.8 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/l_ak.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="L_AK"
+    type="revolute">
+    <origin
+      xyz="0 0.36 0"
+      rpy="-3.1416 0 0" />
+    <parent
+      link="l_kn" />
+    <child
+      link="l_ak" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="-1"
+      upper="1"
+      effort="1"
+      velocity="1" />
+  </joint>
+  <link
+    name="l_ft">
+    <inertial>
+      <origin
+        xyz="-0.043727 6.5593E-11 -0.012271"
+        rpy="0 0 0" />
+      <mass
+        value="0.16769" />
+      <inertia
+        ixx="0.00046347"
+        ixy="1.1839E-10"
+        ixz="0.00019384"
+        iyy="0.00056609"
+        iyz="7.793E-11"
+        izz="0.00017259" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/l_ft.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.86275 0.8902 0.60392 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/l_ft.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="L_FT"
+    type="revolute">
+    <origin
+      xyz="-0.028579 0.0165 0"
+      rpy="-1.5708 0 1.0472" />
+    <parent
+      link="l_ak" />
+    <child
+      link="l_ft" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="-1"
+      upper="1"
+      effort="1"
+      velocity="1" />
+  </joint>
+  <link
+    name="l_hill">
+    <inertial>
+      <origin
+        xyz="0.017317 1.0258E-08 0.0038485"
+        rpy="0 0 0" />
+      <mass
+        value="0.053724" />
+      <inertia
+        ixx="1.3873E-05"
+        ixy="-3.5235E-10"
+        ixz="3.2749E-06"
+        iyy="2.0885E-05"
+        iyz="-1.3453E-10"
+        izz="2.8983E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/l_hill.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.2549 0.21569 0.19216 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/l_hill.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="L_HILL"
+    type="fixed">
+    <origin
+      xyz="-0.03162 0 -0.11123"
+      rpy="0 -1.0472 3.1416" />
+    <parent
+      link="l_ft" />
+    <child
+      link="l_hill" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="l_to">
+    <inertial>
+      <origin
+        xyz="-0.031098 -0.019401 2.6368E-16"
+        rpy="0 0 0" />
+      <mass
+        value="0.10163" />
+      <inertia
+        ixx="9.6374E-05"
+        ixy="-2.937E-06"
+        ixz="-6.3788E-19"
+        iyy="0.00015597"
+        iyz="-2.5696E-19"
+        izz="7.4864E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/l_to.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/l_to.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="L_TO"
+    type="fixed">
+    <origin
+      xyz="-0.083481 0 0.048593"
+      rpy="1.5708 1.0472 0" />
+    <parent
+      link="l_ft" />
+    <child
+      link="l_to" />
+    <axis
+      xyz="0 0 0" />
+    <limit
+      lower="-1"
+      upper="1"
+      effort="1"
+      velocity="1" />
+  </joint>
+  <link
+    name="l_tp">
+    <inertial>
+      <origin
+        xyz="0.0063897 -1.2165E-08 0.0097515"
+        rpy="0 0 0" />
+      <mass
+        value="0.085652" />
+      <inertia
+        ixx="4.9901E-05"
+        ixy="-5.8448E-09"
+        ixz="-1.7648E-06"
+        iyy="5.3727E-05"
+        iyz="-8.9586E-11"
+        izz="9.9684E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/l_tp.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.2549 0.21569 0.19216 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/l_tp.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="L_TP"
+    type="fixed">
+    <origin
+      xyz="-0.028 -0.043 0"
+      rpy="1.5708 0 3.1416" />
+    <parent
+      link="l_to" />
+    <child
+      link="l_tp" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="L_point1">
+    <inertial>
+      <origin
+        xyz="0 1.3878E-17 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.0063706" />
+      <inertia
+        ixx="3.3701E-07"
+        ixy="1.191E-23"
+        ixz="-3.9774E-38"
+        iyy="3.3701E-07"
+        iyz="-4.7639E-38"
+        izz="3.3701E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/L_point1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/L_point1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="L_point1"
+    type="fixed">
+    <origin
+      xyz="-0.037428 0.033 0.0075"
+      rpy="0 0 0" />
+    <parent
+      link="l_tp" />
+    <child
+      link="L_point1" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="L_point2">
+    <inertial>
+      <origin
+        xyz="0 1.3878E-17 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.0063706" />
+      <inertia
+        ixx="3.3701E-07"
+        ixy="3.6136E-24"
+        ixz="-3.851E-37"
+        iyy="3.3701E-07"
+        iyz="2.2204E-37"
+        izz="3.3701E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/L_point2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/L_point2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="L_point2"
+    type="fixed">
+    <origin
+      xyz="0.04 0.032693 0.0075"
+      rpy="0 0 0" />
+    <parent
+      link="l_tp" />
+    <child
+      link="L_point2" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="L_point3">
+    <inertial>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.0063706" />
+      <inertia
+        ixx="3.3701E-07"
+        ixy="1.7524E-23"
+        ixz="4.7964E-38"
+        iyy="3.3701E-07"
+        iyz="2.1165E-38"
+        izz="3.3701E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/L_point3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/L_point3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="L_point3"
+    type="fixed">
+    <origin
+      xyz="0.04 -0.032693 0.0075"
+      rpy="0 0 0" />
+    <parent
+      link="l_tp" />
+    <child
+      link="L_point3" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="L_point4">
+    <inertial>
+      <origin
+        xyz="0 6.9389E-18 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.0063706" />
+      <inertia
+        ixx="3.3701E-07"
+        ixy="1.9025E-24"
+        ixz="-1.8209E-38"
+        iyy="3.3701E-07"
+        iyz="7.0989E-39"
+        izz="3.3701E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/L_point4.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ToeLockModel/meshes/L_point4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="L_point4"
+    type="fixed">
+    <origin
+      xyz="-0.037428 -0.0333 0.0075"
+      rpy="0 0 0" />
+    <parent
+      link="l_tp" />
+    <child
+      link="L_point4" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+</robot>

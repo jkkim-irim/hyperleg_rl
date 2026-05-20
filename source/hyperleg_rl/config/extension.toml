@@ -1,0 +1,20 @@
+[package]
+version = "0.1.0"
+category = "isaaclab"
+readme = "README.md"
+title = "hyperleg_rl"
+author = "IRIM"
+maintainer = "IRIM"
+description = "HyperLeg biped locomotion RL task with PhysX physics"
+repository = ""
+keywords = ["extension", "isaaclab", "physx", "hyperleg", "locomotion"]
+
+[dependencies]
+"isaaclab" = {}
+"isaaclab_assets" = {}
+"isaaclab_physx" = {}
+"isaaclab_rl" = {}
+"isaaclab_tasks" = {}
+
+[[python.module]]
+name = "hyperleg_rl"

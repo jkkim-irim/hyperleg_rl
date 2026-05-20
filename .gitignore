@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+
+# Training outputs / artifacts
+logs/
+outputs/
+wandb/
+
+# Working notes (per projects convention)
+dvcc/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+.cursor/
+
+# USD backup snapshots
+*.usd.bak.*
