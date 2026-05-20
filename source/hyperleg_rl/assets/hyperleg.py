@@ -4,7 +4,7 @@
 """HyperLeg biped robot config (HyperLeg.usd).
 
 14-DoF biped: 7 joints per leg (Hip Yaw / Hip Roll / Hip Pitch / Knee /
-Ankle / Foot / Toe). Joint and body names match
+Ankle Pitch / Ankle Roll / Toe). Joint and body names match
 ``projects/assets/hyperleg/HyperLeg.xml``.
 
 The shipped ``HyperLeg.usd`` was patched once via
@@ -13,21 +13,96 @@ The shipped ``HyperLeg.usd`` was patched once via
 ``<inertial>`` blocks. After patching, the USD is loaded directly via
 :class:`UsdFileCfg`.
 
-Per-joint actuators use the :class:`DCMotorCfg` four-quadrant torque-speed
-saturation model on top of explicit PD control. Joints are grouped by motor
-class (hips, knees, ankles, feet/toes) because :attr:`DCMotorCfg.saturation_effort`
-(stall torque) is a per-group scalar.
+Actuation uses one :class:`CoupledLegActuator` per leg, which implements
+the paper's Cooperative-Actuation model (§II-B, eq. 1-5): a constant 7×7
+Jacobian per leg maps joint torques/velocities to motor space, a
+4-quadrant DC motor saturation is applied at the motor stage, and joint-space
+coulomb·tanh + viscous friction (Table I) is subtracted from the result.
+See ``dvcc/02_actuator_irim.md`` for derivation and design notes.
 """
 
 from pathlib import Path
 
 import isaaclab.sim as sim_utils
-from isaaclab.actuators import DCMotorCfg
 from isaaclab.assets.articulation import ArticulationCfg
+
+from hyperleg_rl.actuators import CoupledLegActuatorCfg
 
 # {repo_root}/assets/hyperleg/HyperLeg.usd
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _HYPERLEG_USD_PATH = _REPO_ROOT / "assets" / "hyperleg" / "HyperLeg.usd"
+
+
+# Per-leg Jacobian J = ∂motor/∂joint, canonical order [HY HR HP KN AK FT TO].
+# Hip block: diag(25)  — 25:1 cycloid, decoupled.
+# Lower-leg 4×4: standing-pose linearization, paper eq. (3) lower-right
+# block (transposed; equivalent to legacy `actuator_pd.py::jacob_inv`).
+_J_PER_LEG = (
+    (25.0,  0.0,  0.0,   0.0,    0.0,    0.0,    0.0  ),
+    ( 0.0, 25.0,  0.0,   0.0,    0.0,    0.0,    0.0  ),
+    ( 0.0,  0.0, 25.0,   0.0,    0.0,    0.0,    0.0  ),
+    ( 0.0,  0.0,  0.0, -31.11,   0.0,    0.0,    0.0  ),
+    ( 0.0,  0.0,  0.0, -31.11,  26.69,  16.51,   0.0  ),
+    ( 0.0,  0.0,  0.0, -31.11,  26.69, -16.51,   0.0  ),
+    ( 0.0,  0.0,  0.0, -31.11,  19.23,   0.0,   21.27),
+)
+
+
+def _leg_actuator_cfg(side: str) -> CoupledLegActuatorCfg:
+    """One ``CoupledLegActuatorCfg`` covering all 7 joints of side L or R."""
+    p = f"{side}_"  # "L_" or "R_"
+    return CoupledLegActuatorCfg(
+        joint_names_expr=[
+            f"{p}HY", f"{p}HR", f"{p}HP",
+            f"{p}KN", f"{p}AK", f"{p}FT", f"{p}TO",
+        ],
+        # Joint-space PD (paper eq. 4 form)
+        stiffness={
+            f"{p}HY": 100.0, f"{p}HR": 150.0, f"{p}HP": 150.0,
+            f"{p}KN": 200.0, f"{p}AK": 40.0,
+            f"{p}FT": 20.0, f"{p}TO": 15.0,
+        },
+        damping={
+            f"{p}HY": 4.0, f"{p}HR": 5.0, f"{p}HP": 5.0,
+            f"{p}KN": 6.0, f"{p}AK": 2.0,
+            f"{p}FT": 1.0, f"{p}TO": 0.8,
+        },
+        # Joint-side coulomb + viscous friction (paper Table I, eq. 5)
+        friction_coulomb={
+            f"{p}HY": 3.30, f"{p}HR": 3.30, f"{p}HP": 3.30,
+            f"{p}KN": 5.59, f"{p}AK": 2.09,
+            f"{p}FT": 2.20, f"{p}TO": 0.88,
+        },
+        friction_viscous={
+            f"{p}HY": 0.08, f"{p}HR": 0.08, f"{p}HP": 0.08,
+            f"{p}KN": 0.10, f"{p}AK": 0.10,
+            f"{p}FT": 0.10, f"{p}TO": 0.10,
+        },
+        activation_vel=0.1,
+        # Cooperative Actuation Jacobian (canonical [HY HR HP KN AK FT TO])
+        jacobian_joint_to_motor=_J_PER_LEG,
+        # Motor-side continuous torque [Nm] (paper Table I "Max torque [Nm]" motor row)
+        motor_effort_limit={
+            f"{p}HY": 5.04, f"{p}HR": 5.04, f"{p}HP": 5.04,
+            f"{p}KN": 2.68,
+            f"{p}AK": 1.63, f"{p}FT": 1.63, f"{p}TO": 1.63,
+        },
+        # Motor-side stall (peak) torque [Nm] = joint "Max torque with CA" / dominant gear.
+        # Hip: 126/25 = 5.04 (stall == continuous, no CA boost on direct-drive cycloid).
+        # Knee: 212/31.11 = 6.81. Ankles: 111.7/(2·26.69) reading shared, take per-motor 2.09.
+        # Toe: 46.8/21.27 = 2.20.
+        motor_saturation_effort={
+            f"{p}HY": 5.04, f"{p}HR": 5.04, f"{p}HP": 5.04,
+            f"{p}KN": 6.81,
+            f"{p}AK": 2.09, f"{p}FT": 2.09, f"{p}TO": 2.20,
+        },
+        motor_velocity_limit={
+            # No-load speed deg/s → rad/s
+            f"{p}HY": 300.0, f"{p}HR": 300.0, f"{p}HP": 300.0,  # 17,189 deg/s
+            f"{p}KN": 327.2,                                     # 18,750 deg/s
+            f"{p}AK": 366.0, f"{p}FT": 366.0, f"{p}TO": 366.0,   # 20,970 deg/s
+        },
+    )
 
 
 HYPERLEG_CFG = ArticulationCfg(
@@ -48,7 +123,6 @@ HYPERLEG_CFG = ArticulationCfg(
             solver_position_iteration_count=4,
             solver_velocity_iteration_count=0,
         ),
-        joint_drive_props=sim_utils.JointDrivePropertiesCfg(ensure_drives_exist=True),
     ),
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 0.94),
@@ -56,46 +130,8 @@ HYPERLEG_CFG = ArticulationCfg(
         joint_vel={".*": 0.0},
     ),
     actuators={
-        "hips": DCMotorCfg(
-            joint_names_expr=[".*_HY", ".*_HR", ".*_HP"],
-            effort_limit={".*_HY": 60.0, ".*_HR": 60.0, ".*_HP": 60.0},
-            saturation_effort=126.0,
-            velocity_limit=25.0,
-            stiffness={".*_HY": 100.0, ".*_HR": 150.0, ".*_HP": 150.0},
-            damping={".*_HY": 4.0, ".*_HR": 5.0, ".*_HP": 5.0},
-        ),
-        "knees": DCMotorCfg(
-            joint_names_expr=[".*_KN"],
-            effort_limit=100.0,
-            saturation_effort=212.0,
-            velocity_limit=18.0,
-            stiffness=200.0,
-            damping=6.0,
-        ),
-        "ankles": DCMotorCfg(
-            joint_names_expr=[".*_AK"],
-            effort_limit=50,
-            saturation_effort=111.7,
-            velocity_limit=30.0,
-            stiffness=40.0,
-            damping=2.0,
-        ),
-        "foot": DCMotorCfg(
-            joint_names_expr=[".*_FT"],
-            effort_limit=20.0,
-            saturation_effort=48.4,
-            velocity_limit=35.0,
-            stiffness=20.0,
-            damping=1.0,
-        ),
-        "toe": DCMotorCfg(
-            joint_names_expr=[".*_TO"],
-            effort_limit=20.0,
-            saturation_effort=46.8,
-            velocity_limit=35.0,
-            stiffness=15.0,
-            damping=0.8,
-        ),
+        "left_leg": _leg_actuator_cfg("L"),
+        "right_leg": _leg_actuator_cfg("R"),
     },
 )
-"""HyperLeg biped articulation config (UsdFileCfg + position-PD actuator)."""
+"""HyperLeg biped articulation config (UsdFileCfg + per-leg CoupledLegActuator)."""
