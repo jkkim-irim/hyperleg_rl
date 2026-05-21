@@ -12,41 +12,21 @@ from . import agents
 ##
 
 gym.register(
-    id="Isaac-Velocity-Flat-HyperLeg-v0",
+    id="HyperLeg-Locomotion-v0",
     entry_point="isaaclab.envs:ManagerBasedRLEnv",
     disable_env_checker=True,
     kwargs={
-        "env_cfg_entry_point": f"{__name__}.flat_env_cfg:HyperLegFlatEnvCfg",
-        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:HyperLegFlatPPORunnerCfg",
+        "env_cfg_entry_point": f"{__name__}.hyperleg_env_cfg:HyperLegEnvCfg",
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:HyperLegPPORunnerCfg",
     },
 )
 
 gym.register(
-    id="Isaac-Velocity-Flat-HyperLeg-Play-v0",
+    id="HyperLeg-Locomotion-Play-v0",
     entry_point="isaaclab.envs:ManagerBasedRLEnv",
     disable_env_checker=True,
     kwargs={
-        "env_cfg_entry_point": f"{__name__}.flat_env_cfg:HyperLegFlatEnvCfg_PLAY",
-        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:HyperLegFlatPPORunnerCfg",
-    },
-)
-
-gym.register(
-    id="Isaac-Velocity-Rough-HyperLeg-v0",
-    entry_point="isaaclab.envs:ManagerBasedRLEnv",
-    disable_env_checker=True,
-    kwargs={
-        "env_cfg_entry_point": f"{__name__}.rough_env_cfg:HyperLegRoughEnvCfg",
-        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:HyperLegRoughPPORunnerCfg",
-    },
-)
-
-gym.register(
-    id="Isaac-Velocity-Rough-HyperLeg-Play-v0",
-    entry_point="isaaclab.envs:ManagerBasedRLEnv",
-    disable_env_checker=True,
-    kwargs={
-        "env_cfg_entry_point": f"{__name__}.rough_env_cfg:HyperLegRoughEnvCfg_PLAY",
-        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:HyperLegRoughPPORunnerCfg",
+        "env_cfg_entry_point": f"{__name__}.hyperleg_env_cfg:HyperLegEnvCfg_PLAY",
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:HyperLegPPORunnerCfg",
     },
 )

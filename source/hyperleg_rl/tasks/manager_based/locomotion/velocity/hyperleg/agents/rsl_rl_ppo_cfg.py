@@ -7,23 +7,18 @@ from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlPpoActorCriticCfg, R
 
 
 @configclass
-class HyperLegRoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
+class HyperLegPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 24
-    max_iterations = 15000
+    max_iterations = 5000
     save_interval = 200
-    experiment_name = "hyperleg_rough"
+    experiment_name = "hyperleg_locomotion"
     logger = "wandb"
-    wandb_project = "hyperleg_rough"
-    # Asymmetric actor-critic obs routing.
-    obs_groups = {
-        "actor": ["policy"],
-        "critic": ["privileged"],
-    }
+    wandb_project = "hyperleg_locomotion"
     policy = RslRlPpoActorCriticCfg(
         init_noise_std=1.0,
         actor_obs_normalization=True,
         critic_obs_normalization=True,
-        actor_hidden_dims=[256, 128, 64],
+        actor_hidden_dims=[512, 256, 128],
         critic_hidden_dims=[512, 256, 128],
         activation="elu",
     )
@@ -41,15 +36,3 @@ class HyperLegRoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
         desired_kl=0.01,
         max_grad_norm=1.0,
     )
-
-
-@configclass
-class HyperLegFlatPPORunnerCfg(HyperLegRoughPPORunnerCfg):
-    def __post_init__(self):
-        super().__post_init__()
-
-        self.max_iterations = 1000
-        self.experiment_name = "hyperleg_flat"
-        self.wandb_project = "hyperleg_flat"
-        self.policy.actor_hidden_dims = [128, 128, 128]
-        self.policy.critic_hidden_dims = [128, 128, 128]

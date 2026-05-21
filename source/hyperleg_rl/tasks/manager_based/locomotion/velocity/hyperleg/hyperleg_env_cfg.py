@@ -1,9 +1,10 @@
 # Copyright (c) 2022-2026, The Isaac Lab Project Developers.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""HyperLeg biped locomotion environment configuration (rough terrain).
+"""HyperLeg biped locomotion environment configuration.
 
-Uses the PhysX physics backend.
+Single env file: training (`HyperLegEnvCfg`) uses rough terrain, play
+(`HyperLegEnvCfg_PLAY`) switches to flat plane. PhysX backend.
 """
 
 import math
@@ -22,7 +23,7 @@ from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.scene import InteractiveSceneCfg
-from isaaclab.sensors import ContactSensorCfg
+from isaaclab.sensors import ContactSensorCfg, RayCasterCfg, patterns
 from isaaclab.sim import PhysxCfg, SimulationCfg
 from isaaclab.terrains import TerrainImporterCfg
 
@@ -31,7 +32,6 @@ if TYPE_CHECKING:
 
 from isaaclab.utils.configclass import configclass
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR, ISAACLAB_NUCLEUS_DIR
-from isaaclab.utils.noise import UniformNoiseCfg as Unoise
 
 import isaaclab_tasks.manager_based.locomotion.velocity.mdp as mdp
 
@@ -64,7 +64,7 @@ def feet_contact_bool(env, sensor_cfg: SceneEntityCfg, threshold: float = 1.0) -
 
 @configclass
 class HyperLegSceneCfg(InteractiveSceneCfg):
-    """Rough-terrain scene for HyperLeg."""
+    """Training scene for HyperLeg (rough terrain)."""
 
     terrain = TerrainImporterCfg(
         prim_path="/World/ground",
@@ -89,7 +89,15 @@ class HyperLegSceneCfg(InteractiveSceneCfg):
         debug_vis=False,
     )
     robot = HYPERLEG_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
-    contact_forces = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/.*", history_length=3)
+    contact_forces = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/.*", history_length=3, track_air_time=True)
+    height_scanner = RayCasterCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/torso",
+        offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 20.0)),
+        ray_alignment="yaw",
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[1.6, 1.0]),
+        debug_vis=False,
+        mesh_prim_paths=["/World/ground"],
+    )
     sky_light = AssetBaseCfg(
         prim_path="/World/skyLight",
         spawn=sim_utils.DomeLightCfg(
@@ -105,15 +113,15 @@ class HyperLegCommandsCfg:
 
     base_velocity = mdp.UniformVelocityCommandCfg(
         asset_name="robot",
-        resampling_time_range=(10.0, 10.0),
+        resampling_time_range=(8.0, 10.0),
         rel_standing_envs=0.02,
         rel_heading_envs=1.0,
         heading_command=True,
         heading_control_stiffness=0.5,
         debug_vis=True,
         ranges=mdp.UniformVelocityCommandCfg.Ranges(
-            lin_vel_x=(-1.0, 1.0),
-            lin_vel_y=(-1.0, 1.0),
+            lin_vel_x=(-1.5, 3.0),
+            lin_vel_y=(-0.0, 0.0),
             ang_vel_z=(-1.0, 1.0),
             heading=(-math.pi, math.pi),
         ),
@@ -127,70 +135,38 @@ class HyperLegActionsCfg:
     joint_pos = mdp.EMAJointPositionToLimitsActionCfg(
         asset_name="robot",
         joint_names=["L_.*", "R_.*"],
-        scale=0.5,
-        alpha=0.1,
+        scale=1.0,
+        alpha=0.4,
     )
 
 
 @configclass
 class HyperLegObservationsCfg:
-    """Asymmetric actor-critic observations.
+    """Symmetric observations: actor and critic share the full privileged view.
 
-    Actor (``policy``) sees only proprioceptive signals that map to real-robot
-    sensors (IMU + joint encoder + prior action + velocity command). Critic
-    (``privileged``) sees the full simulator state plus height scan and
-    per-foot contact bools.
+    Sim2Real is not the target — all privileged signals (base velocities, root
+    state, foot contacts, height scan, episode timing) are exposed to the
+    policy. No observation noise is injected.
     """
 
     @configclass
     class PolicyCfg(ObsGroup):
-        """Actor obs: deployable on real robot (IMU + encoder + command + last action)."""
+        """Full-state obs shared by actor and critic (no noise)."""
 
-        last_action = ObsTerm(func=mdp.last_action)
-        velocity_commands = ObsTerm(func=mdp.generated_commands, params={"command_name": "base_velocity"})
-        projected_gravity = ObsTerm(
-            func=mdp.projected_gravity,
-            noise=Unoise(n_min=-0.05, n_max=0.05),
-        )
-        joint_pos = ObsTerm(
-            func=mdp.joint_pos_rel,
-            noise=Unoise(n_min=-0.01, n_max=0.01),
-        )
-
-        def __post_init__(self):
-            self.enable_corruption = True
-            self.concatenate_terms = True
-
-    @configclass
-    class PrivilegedCfg(ObsGroup):
-        """Critic-only obs: full sim state (no noise) + height scan + foot contact bools."""
-
-        # Mirror of actor view (clean, no noise)
-        last_action = ObsTerm(func=mdp.last_action)
         velocity_commands = ObsTerm(func=mdp.generated_commands, params={"command_name": "base_velocity"})
         projected_gravity = ObsTerm(func=mdp.projected_gravity)
+        base_lin_vel = ObsTerm(func=mdp.base_lin_vel)
+        base_ang_vel = ObsTerm(func=mdp.base_ang_vel)
         joint_pos = ObsTerm(func=mdp.joint_pos)
         joint_vel = ObsTerm(func=mdp.joint_vel)
         joint_effort = ObsTerm(func=mdp.joint_effort)
-        # Root state (state estimation required on real robot → privileged)
-        base_lin_vel = ObsTerm(func=mdp.base_lin_vel)
-        base_ang_vel = ObsTerm(func=mdp.base_ang_vel)
+        last_action = ObsTerm(func=mdp.last_action)
         base_pos_z = ObsTerm(func=mdp.base_pos_z)
-        root_pos_w = ObsTerm(func=mdp.root_pos_w)
-        root_quat_w = ObsTerm(func=mdp.root_quat_w)
-        root_lin_vel_w = ObsTerm(func=mdp.root_lin_vel_w)
-        root_ang_vel_w = ObsTerm(func=mdp.root_ang_vel_w)
-        # Per-foot contact bools, ordered [l_ft, l_to, r_ft, r_to]
-        feet_contact = ObsTerm(
-            func=feet_contact_bool,
-            params={
-                "sensor_cfg": SceneEntityCfg(
-                    "contact_forces", body_names=["l_ft", "l_to", "r_ft", "r_to"]
-                ),
-                "threshold": 1.0,
-            },
+        height_scan = ObsTerm(
+            func=mdp.height_scan,
+            params={"sensor_cfg": SceneEntityCfg("height_scanner")},
+            clip=(-1.0, 1.0),
         )
-        # Episode timing
         current_time_s = ObsTerm(func=mdp.current_time_s)
         remaining_time_s = ObsTerm(func=mdp.remaining_time_s)
 
@@ -199,27 +175,39 @@ class HyperLegObservationsCfg:
             self.concatenate_terms = True
 
     policy: PolicyCfg = PolicyCfg()
-    privileged: PrivilegedCfg = PrivilegedCfg()
 
 
 @configclass
 class HyperLegRewardsCfg:
-    """HyperLeg rough-terrain reward terms."""
-    # dof_torques_l2 = RewTerm(func=mdp.joint_torques_l2, weight=-5.0e-6)
+    """HyperLeg reward terms."""
+    dof_torques_l2 = RewTerm(func=mdp.joint_torques_l2, weight=-1.0e-4)
+    termination_penalty = RewTerm(func=mdp.is_terminated, weight=-200.0)
+    # dof_acc_l2 = RewTerm(func=mdp.joint_acc_l2, weight=-5.0e-7)
+    # action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.015)
 
     track_lin_vel_xy_exp = RewTerm(
         func=mdp.track_lin_vel_xy_exp,
-        weight=1.0,
-        params={"command_name": "base_velocity", "std": math.sqrt(0.2)},
+        weight=2.0,
+        params={"command_name": "base_velocity", "std": math.sqrt(0.25)},
     )
     track_ang_vel_z_exp = RewTerm(
         func=mdp.track_ang_vel_z_exp,
-        weight=1.0,
-        params={"command_name": "base_velocity", "std": math.sqrt(0.2)},
+        weight=0.5,
+        params={"command_name": "base_velocity", "std": math.sqrt(0.25)},
     )
-    # termination_penalty = RewTerm(func=mdp.is_terminated, weight=-200.0)
-    dof_acc_l2 = RewTerm(func=mdp.joint_acc_l2, weight=-5.0e-7)
-    # action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.015)
+    feet_slide = RewTerm(
+        func=mdp.feet_slide,
+        weight=-0.25,
+        params={
+            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=["l_tp", "l_hill", "r_tp", "r_hill"]),
+            "asset_cfg": SceneEntityCfg("robot", body_names=["l_tp", "l_hill", "r_tp", "r_hill"]),
+        },
+    )
+    joint_deviation_hip_yr = RewTerm(
+        func=mdp.joint_deviation_l1,
+        weight=-0.2,
+        params={"asset_cfg": SceneEntityCfg("robot", joint_names=[".*_HY", ".*_HR"])},
+    )
 
 
 @configclass
@@ -231,41 +219,24 @@ class HyperLegEventsCfg:
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
-            "static_friction_range": (0.8, 0.8),
-            "dynamic_friction_range": (0.6, 0.6),
+            "static_friction_range": (1.0, 1.0),
+            "dynamic_friction_range": (1.0, 1.0),
             "restitution_range": (0.0, 0.0),
             "num_buckets": 64,
-        },
-    )
-    add_base_mass = EventTerm(
-        func=mdp.randomize_rigid_body_mass,
-        mode="startup",
-        params={
-            "asset_cfg": SceneEntityCfg("robot", body_names=["torso"]),
-            "mass_distribution_params": (-5.0, 5.0),
-            "operation": "add",
-        },
-    )
-    base_com = EventTerm(
-        func=mdp.randomize_rigid_body_com,
-        mode="startup",
-        params={
-            "asset_cfg": SceneEntityCfg("robot", body_names=["torso"]),
-            "com_range": {"x": (-0.05, 0.05), "y": (-0.05, 0.05), "z": (-0.01, 0.01)},
         },
     )
     reset_base = EventTerm(
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (0.0, 0.0), "y": (0.0, 0.0), "yaw": (0.0, 0.0)},
+            "pose_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5), "yaw": (-3.14, 3.14)},
             "velocity_range": {
-                "x": (0.0, 0.0),
-                "y": (0.0, 0.0),
-                "z": (0.0, 0.0),
-                "roll": (0.0, 0.0),
-                "pitch": (0.0, 0.0),
-                "yaw": (0.0, 0.0),
+                "x": (-0.5, 0.5),
+                "y": (-0.5, 0.5),
+                "z": (-0.5, 0.5),
+                "roll": (-0.5, 0.5),
+                "pitch": (-0.5, 0.5),
+                "yaw": (-0.5, 0.5),
             },
         },
     )
@@ -273,15 +244,15 @@ class HyperLegEventsCfg:
         func=mdp.reset_joints_by_offset,
         mode="reset",
         params={
-            "position_range": (-0.1, 0.1),
+            "position_range": (-0.2, 0.2),
             "velocity_range": (0.0, 0.0),
         },
     )
     push_robot = EventTerm(
         func=mdp.push_by_setting_velocity,
         mode="interval",
-        interval_range_s=(5.0, 10.0),
-        params={"velocity_range": {"x": (-0.1, 0.1), "y": (-0.1, 0.1)}},
+        interval_range_s=(8.0, 16.0),
+        params={"velocity_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5)}},
     )
 
 
@@ -290,7 +261,7 @@ class HyperLegTerminationsCfg:
     """Episode termination terms for HyperLeg."""
 
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
-    pelvis_contact = DoneTerm(
+    torso_contact = DoneTerm(
         func=mdp.illegal_contact,
         params={
             "sensor_cfg": SceneEntityCfg("contact_forces", body_names=["torso"]),
@@ -307,8 +278,8 @@ class HyperLegCurriculumCfg:
 
 
 @configclass
-class HyperLegRoughEnvCfg(ManagerBasedRLEnvCfg):
-    """HyperLeg rough environment configuration."""
+class HyperLegEnvCfg(ManagerBasedRLEnvCfg):
+    """HyperLeg training environment (rough terrain)."""
 
     scene: HyperLegSceneCfg = HyperLegSceneCfg(num_envs=4096, env_spacing=2.5)
     observations: HyperLegObservationsCfg = HyperLegObservationsCfg()
@@ -321,13 +292,15 @@ class HyperLegRoughEnvCfg(ManagerBasedRLEnvCfg):
     sim: SimulationCfg = SimulationCfg(physx=PHYSX_CFG)
 
     def __post_init__(self):
-        self.decimation = 4
+        self.decimation = 10
         self.episode_length_s = 20.0
-        self.sim.dt = 0.005
+        self.sim.dt = 0.002
         self.sim.render_interval = self.decimation
         self.sim.physics_material = self.scene.terrain.physics_material
         if self.scene.contact_forces is not None:
             self.scene.contact_forces.update_period = self.sim.dt
+        if self.scene.height_scanner is not None:
+            self.scene.height_scanner.update_period = self.decimation * self.sim.dt
         if getattr(self.curriculum, "terrain_levels", None) is not None:
             if self.scene.terrain.terrain_generator is not None:
                 self.scene.terrain.terrain_generator.curriculum = True
@@ -336,17 +309,19 @@ class HyperLegRoughEnvCfg(ManagerBasedRLEnvCfg):
 
 
 @configclass
-class HyperLegRoughEnvCfg_PLAY(HyperLegRoughEnvCfg):
+class HyperLegEnvCfg_PLAY(HyperLegEnvCfg):
+    """HyperLeg play environment (flat plane)."""
+
     def __post_init__(self) -> None:
         super().__post_init__()
 
+        # switch to flat plane (overrides training rough terrain)
+        self.scene.terrain.terrain_type = "plane"
+        self.scene.terrain.terrain_generator = None
+        self.curriculum.terrain_levels = None
+
         self.scene.num_envs = 50
         self.scene.env_spacing = 2.5
-        self.scene.terrain.max_init_terrain_level = None
-        if self.scene.terrain.terrain_generator is not None:
-            self.scene.terrain.terrain_generator.num_rows = 5
-            self.scene.terrain.terrain_generator.num_cols = 5
-            self.scene.terrain.terrain_generator.curriculum = False
 
         self.commands.base_velocity.ranges.lin_vel_x = (0.7, 1.0)
         self.commands.base_velocity.ranges.lin_vel_y = (0.0, 0.0)
