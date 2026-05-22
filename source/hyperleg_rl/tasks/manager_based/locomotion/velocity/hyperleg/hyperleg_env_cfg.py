@@ -186,10 +186,19 @@ class HyperLegRewardsCfg:
     """HyperLeg reward terms."""
     # action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.005)
     dof_acc_l2 = RewTerm(func=mdp.joint_acc_l2, weight=-2.0e-7)
+    # Normalized fold-of-threshold form: penalty = (heat/threshold - 1)^2.
+    # Per-joint thresholds calibrated to ~2-3x each motor's observed steady-state
+    # heat under the current policy, so every motor faces real pressure once it
+    # genuinely abuses its own continuous rating envelope. See dvcc/10 §5.1.
     thermal_overuse = RewTerm(
         func=motor_thermal_overuse,
-        weight=-100.0,
-        params={"threshold": 0.25},
+        weight=-10.0,
+        params={
+            "threshold": {
+                "HY": 0.05, "HR": 0.10, "HP": 0.40,
+                "KN": 0.50, "AK": 0.25, "FT": 0.30, "TO": 0.05,
+            },
+        },
     )
     torque_symmetry = RewTerm(
         func=motor_torque_symmetry,
