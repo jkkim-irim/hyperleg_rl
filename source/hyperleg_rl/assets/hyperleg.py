@@ -66,14 +66,14 @@ def _leg_actuator_cfg(side: str, with_toe: bool = True) -> CoupledLegActuatorCfg
     if with_toe:
         joint_names.append(f"{p}TO")
     stiffness = {
-        f"{p}HY": 50.0, f"{p}HR": 50.0, f"{p}HP": 80.0,
-        f"{p}KN": 200.0, f"{p}AK": 60.0,
-        f"{p}FT": 8.0, f"{p}TO": 8.0,
+        f"{p}HY": 60.0, f"{p}HR": 70.0, f"{p}HP": 150.0,
+        f"{p}KN": 220.0, f"{p}AK": 40.0,
+        f"{p}FT": 6.0, f"{p}TO": 10.0,
     }
     damping = {
-        f"{p}HY": 5.0, f"{p}HR": 5.0, f"{p}HP": 8.0,
-        f"{p}KN": 20.0, f"{p}AK": 6.0,
-        f"{p}FT": 1.0, f"{p}TO": 1.0,
+        f"{p}HY": 4.0, f"{p}HR": 5.0, f"{p}HP": 17.0,
+        f"{p}KN": 14.0, f"{p}AK": 4.0,
+        f"{p}FT": 0.5, f"{p}TO": 0.6,
     }
     armature = {
         f"{p}HY": 0.01, f"{p}HR": 0.01, f"{p}HP": 0.01,
