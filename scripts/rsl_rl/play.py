@@ -34,6 +34,12 @@ parser.add_argument(
     help="Use the pre-trained checkpoint from Nucleus.",
 )
 parser.add_argument("--real-time", action="store_true", default=False, help="Run in real-time, if possible.")
+parser.add_argument(
+    "--telemetry",
+    action="store_true",
+    default=False,
+    help="Open a live plot of joint torque / motor heat / motor load_avg for env 0.",
+)
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
 # append AppLauncher cli args
@@ -200,6 +206,17 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     dt = env.unwrapped.step_dt
 
+    # optional live telemetry plotter (env-0 only)
+    telemetry = None
+    if args_cli.telemetry:
+        try:
+            from hyperleg_rl.viz import MotorTelemetryPlotter
+        except ImportError as exc:
+            print(f"[WARN] --telemetry requires imgui_bundle. Continuing without GUI. ({exc})")
+        else:
+            telemetry = MotorTelemetryPlotter(env)
+            telemetry.start()
+
     # reset environment
     obs = env.get_observations()
     timestep = 0
@@ -212,6 +229,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
             actions = policy(obs)
             # env stepping
             obs, _, dones, _ = env.step(actions)
+            if telemetry is not None:
+                telemetry.update()
             # reset recurrent states for episodes that have terminated
             if version.parse(installed_version) >= version.parse("4.0.0"):
                 policy.reset(dones)
@@ -228,6 +247,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         if args_cli.real_time and sleep_time > 0:
             time.sleep(sleep_time)
 
+    if telemetry is not None:
+        telemetry.stop()
     # close the simulator
     env.close()
 
