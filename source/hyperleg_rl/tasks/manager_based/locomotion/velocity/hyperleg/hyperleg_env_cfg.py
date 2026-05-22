@@ -35,7 +35,11 @@ from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR, ISAACLAB_NUCLEUS_DIR
 
 import isaaclab_tasks.manager_based.locomotion.velocity.mdp as mdp
 
-from hyperleg_rl.assets import HYPERLEG_CFG
+from hyperleg_rl.assets import HYPERLEG_CFG, HYPERLEG_WO_TOE_CFG
+from hyperleg_rl.tasks.manager_based.locomotion.velocity.hyperleg.mdp import (
+    motor_thermal_overuse,
+    motor_torque_symmetry,
+)
 
 from isaaclab.terrains.config.rough import ROUGH_TERRAINS_CFG  # isort: skip
 
@@ -116,14 +120,14 @@ class HyperLegCommandsCfg:
         resampling_time_range=(8.0, 10.0),
         rel_standing_envs=0.02,
         rel_heading_envs=1.0,
-        heading_command=True,
+        heading_command=False,
         heading_control_stiffness=0.5,
         debug_vis=True,
         ranges=mdp.UniformVelocityCommandCfg.Ranges(
-            lin_vel_x=(-1.5, 3.0),
-            lin_vel_y=(-0.0, 0.0),
+            lin_vel_x=(-0.5, 3.0),
+            lin_vel_y=(-0.5, 0.5),
             ang_vel_z=(-1.0, 1.0),
-            heading=(-math.pi, math.pi),
+            heading=(-math.pi, math.pi),          
         ),
     )
 
@@ -180,33 +184,27 @@ class HyperLegObservationsCfg:
 @configclass
 class HyperLegRewardsCfg:
     """HyperLeg reward terms."""
-    dof_torques_l2 = RewTerm(func=mdp.joint_torques_l2, weight=-1.0e-4)
-    termination_penalty = RewTerm(func=mdp.is_terminated, weight=-200.0)
-    # dof_acc_l2 = RewTerm(func=mdp.joint_acc_l2, weight=-5.0e-7)
-    # action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.015)
-
+    # action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.005)
+    dof_acc_l2 = RewTerm(func=mdp.joint_acc_l2, weight=-2.0e-7)
+    thermal_overuse = RewTerm(
+        func=motor_thermal_overuse,
+        weight=-100.0,
+        params={"threshold": 0.25},
+    )
+    torque_symmetry = RewTerm(
+        func=motor_torque_symmetry,
+        weight=-10.0,
+    )
+    termination_penalty = RewTerm(func=mdp.is_terminated, weight=-100.0)
     track_lin_vel_xy_exp = RewTerm(
         func=mdp.track_lin_vel_xy_exp,
         weight=2.0,
-        params={"command_name": "base_velocity", "std": math.sqrt(0.25)},
+        params={"command_name": "base_velocity", "std": math.sqrt(0.2)},
     )
     track_ang_vel_z_exp = RewTerm(
         func=mdp.track_ang_vel_z_exp,
         weight=0.5,
-        params={"command_name": "base_velocity", "std": math.sqrt(0.25)},
-    )
-    feet_slide = RewTerm(
-        func=mdp.feet_slide,
-        weight=-0.25,
-        params={
-            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=["l_tp", "l_hill", "r_tp", "r_hill"]),
-            "asset_cfg": SceneEntityCfg("robot", body_names=["l_tp", "l_hill", "r_tp", "r_hill"]),
-        },
-    )
-    joint_deviation_hip_yr = RewTerm(
-        func=mdp.joint_deviation_l1,
-        weight=-0.2,
-        params={"asset_cfg": SceneEntityCfg("robot", joint_names=[".*_HY", ".*_HR"])},
+        params={"command_name": "base_velocity", "std": math.sqrt(0.2)},
     )
 
 
@@ -219,8 +217,8 @@ class HyperLegEventsCfg:
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
-            "static_friction_range": (1.0, 1.0),
-            "dynamic_friction_range": (1.0, 1.0),
+            "static_friction_range": (0.8, 0.8),
+            "dynamic_friction_range": (0.6, 0.6),
             "restitution_range": (0.0, 0.0),
             "num_buckets": 64,
         },
@@ -251,8 +249,8 @@ class HyperLegEventsCfg:
     push_robot = EventTerm(
         func=mdp.push_by_setting_velocity,
         mode="interval",
-        interval_range_s=(8.0, 16.0),
-        params={"velocity_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5)}},
+        interval_range_s=(4.0, 8.0),
+        params={"velocity_range": {"x": (-0.5, 1.0), "y": (-0.5, 0.5)}},
     )
 
 
@@ -293,7 +291,7 @@ class HyperLegEnvCfg(ManagerBasedRLEnvCfg):
 
     def __post_init__(self):
         self.decimation = 10
-        self.episode_length_s = 20.0
+        self.episode_length_s = 30.0
         self.sim.dt = 0.002
         self.sim.render_interval = self.decimation
         self.sim.physics_material = self.scene.terrain.physics_material
@@ -320,10 +318,42 @@ class HyperLegEnvCfg_PLAY(HyperLegEnvCfg):
         self.scene.terrain.terrain_generator = None
         self.curriculum.terrain_levels = None
 
-        self.scene.num_envs = 50
+        self.scene.num_envs = 1
         self.scene.env_spacing = 2.5
 
-        self.commands.base_velocity.ranges.lin_vel_x = (0.7, 1.0)
+        self.commands.base_velocity.ranges.lin_vel_x = (1.3, 1.3)
         self.commands.base_velocity.ranges.lin_vel_y = (0.0, 0.0)
         self.commands.base_velocity.ranges.heading = (0.0, 0.0)
         self.observations.policy.enable_corruption = False
+
+        # Deterministic play: drop all domain/reset/push randomization so the
+        # robot starts from init_state and is never perturbed mid-episode.
+        self.events.physics_material = None
+        self.events.reset_base.params["pose_range"] = {
+            "x": (0.0, 0.0), "y": (0.0, 0.0), "yaw": (0.0, 0.0),
+        }
+        self.events.reset_base.params["velocity_range"] = {
+            "x": (0.0, 0.0), "y": (0.0, 0.0), "z": (0.0, 0.0),
+            "roll": (0.0, 0.0), "pitch": (0.0, 0.0), "yaw": (0.0, 0.0),
+        }
+        self.events.reset_robot_joints.params["position_range"] = (0.0, 0.0)
+        self.events.reset_robot_joints.params["velocity_range"] = (0.0, 0.0)
+        self.events.push_robot = None
+
+
+@configclass
+class HyperLegWoToeEnvCfg(HyperLegEnvCfg):
+    """Toe-ablation variant: swaps in the L_TO/R_TO-free robot. Everything else identical."""
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self.scene.robot = HYPERLEG_WO_TOE_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+
+
+@configclass
+class HyperLegWoToeEnvCfg_PLAY(HyperLegEnvCfg_PLAY):
+    """Toe-ablation play environment (flat plane)."""
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self.scene.robot = HYPERLEG_WO_TOE_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
