@@ -239,7 +239,8 @@ class MotorTelemetryPlotter:
                     "R": imgui.ImVec4(1.00, 0.38, 0.30, 1.00),
                 }
                 for side in ("L", "R"):
-                    ys = snap[(side, signal)][:, sel]
+                    # Column slice of a 2D array is non-contiguous; implot needs 1D contiguous.
+                    ys = np.ascontiguousarray(snap[(side, signal)][:, sel])
                     implot.set_next_line_style(colors[side], 1.5)
                     implot.plot_line(f"{side}_{role_label}", xs, ys)
             implot.end_plot()
