@@ -230,7 +230,9 @@ class MotorTelemetryPlotter:
             sel = sel_new
 
         if implot.begin_plot(f"##plot_{key}", imgui.ImVec2(-1.0, plot_h)):
-            implot.setup_axes("t [s]", ylabel)
+            # auto_fit on both axes → axes track the latest buffer every frame.
+            af = implot.AxisFlags_.auto_fit.value
+            implot.setup_axes("t [s]", ylabel, af, af)
             if len(xs) >= 2:
                 role_label = self._roles[sel]
                 # L: blue, R: red. Distinct colors give clear bilateral readout.
