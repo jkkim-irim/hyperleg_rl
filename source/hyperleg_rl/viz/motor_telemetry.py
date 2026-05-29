@@ -3,14 +3,17 @@
 
 """Live telemetry plotter for HyperLeg motors (Play mode only).
 
-Three stacked ImPlot subplots (joint-side torque / motor_heat / motor_load_avg).
-Each subplot has its own role selector (HY/HR/HP/KN/AK/FT/TO); both L and R
-legs of that role are drawn together so bilateral asymmetry is visible.
+Two ImPlot tabs:
+- "Motors": stacked joint-side torque / motor_heat subplots, each with a role
+  selector (HY/HR/HP/KN/AK/FT/TO); both L and R legs are drawn together so
+  bilateral asymmetry is visible.
+- "Power": per-joint power consumption (Joule + Mech) coloured by joint group,
+  plus a Joule / Mechanical-loss / Total(sum) breakdown. A leg selector picks
+  L, R, or L+R.
 
 Designed to not bottleneck the sim main loop:
-- Per env.step() the sim thread copies one env-row of three tensors per leg to
-  CPU (≈ 168 B/step for 7-joint variant) and appends to numpy ring buffers
-  under a short-held lock.
+- Per env.step() the sim thread copies one env-row of two tensors per leg to
+  CPU and appends to numpy ring buffers under a short-held lock.
 - A daemon thread runs the GLFW/ImPlot window via ``imgui_bundle.immapp.run``;
   it copies a snapshot under the lock then renders without holding it.
 """
@@ -28,14 +31,32 @@ if TYPE_CHECKING:
 
 # Canonical role order matches CoupledLegActuator._ROLE_SUFFIXES.
 _ALL_ROLES: tuple[str, ...] = ("HY", "HR", "HP", "KN", "AK", "FT", "TO")
-_SIGNALS: tuple[str, ...] = ("applied_tau", "motor_heat", "motor_load_avg")
+_SIGNALS: tuple[str, ...] = ("applied_tau", "motor_heat", "joule", "mech")
 
-# Subplot configuration: (key, signal, title, y-axis label).
+# Subplot configuration for the "Motors" tab: (key, signal, title, y-axis label).
 _SUBPLOTS: tuple[tuple[str, str, str, str], ...] = (
     ("top", "applied_tau", "Joint-side torque (applied_effort)", "tau_j [Nm]"),
-    ("mid", "motor_heat", "Motor heat EMA  (tau_m / tau_cont)^2", "heat [-]"),
-    ("bot", "motor_load_avg", "Motor load EMA  |tau_m / tau_cont|", "load [-]"),
+    ("bot", "motor_heat", "Motor heat EMA  (tau_m / tau_cont)^2", "heat [-]"),
 )
+
+# Per-motor electrical power coefficient Cp = R_LL / K_t^2 [W/Nm^2] by canonical role.
+# SOURCE OF TRUTH: tasks/.../hyperleg/mdp/rewards.py::_POWER_COEF_BY_ROLE (datasheet-
+# derived). Duplicated here — with the same asymmetric torque/efficiency scaling as
+# _compute_cot_components — so the viz package stays independent of the task package.
+# Keep in sync if rewards.py changes.
+_POWER_COEF_BY_ROLE: dict[str, float] = {
+    "HY": 3.54148162, "HR": 3.54148162, "HP": 3.54148162,
+    "KN": 33.44203328, "AK": 124.567474, "FT": 124.567474, "TO": 124.567474,
+}
+
+# Per-joint power line color by joint group (RGBA): hip(HY/HR/HP)=blue, knee(KN)=red,
+# ankle(AK/FT)=green, toe(TO)=pink-purple.
+_ROLE_GROUP_RGBA: dict[str, tuple[float, float, float, float]] = {
+    "HY": (0.20, 0.55, 1.00, 1.0), "HR": (0.20, 0.55, 1.00, 1.0), "HP": (0.20, 0.55, 1.00, 1.0),
+    "KN": (1.00, 0.30, 0.25, 1.0),
+    "AK": (0.20, 0.80, 0.35, 1.0), "FT": (0.20, 0.80, 0.35, 1.0),
+    "TO": (0.85, 0.40, 0.95, 1.0),
+}
 
 
 class MotorTelemetryPlotter:
@@ -70,6 +91,8 @@ class MotorTelemetryPlotter:
         self._n_roles = n_left
         self._roles = list(_ALL_ROLES[:n_left])
         self._env_index = int(env_index)
+        # POWER_COEF in canonical role order [:n] for per-joint Joule heating.
+        self._power_coef = np.array([_POWER_COEF_BY_ROLE[r] for r in self._roles], dtype=np.float32)
 
         # Cache role_order (canonical->USD) per side as CPU int64 arrays.
         self._role_order = {
@@ -94,6 +117,7 @@ class MotorTelemetryPlotter:
 
         # GUI thread state.
         self._sel = {key: 0 for key, *_ in _SUBPLOTS}  # selected role index per subplot
+        self._power_sel = 2  # Power-tab leg selector: 0=L, 1=R, 2=L+R
         self._gui_thread: threading.Thread | None = None
         self._gui_alive = threading.Event()
 
@@ -123,13 +147,18 @@ class MotorTelemetryPlotter:
             # applied_effort is USD-ordered → reindex into canonical.
             tau_usd = act.applied_effort[env_i].detach().cpu().numpy()
             snap[(side, "applied_tau")] = tau_usd[ro].astype(np.float32, copy=False)
-            # motor_heat / motor_load_avg are already canonical (see coupled_leg.py L106-116).
+            # motor_heat is already canonical (see coupled_leg.py).
             snap[(side, "motor_heat")] = (
                 act.motor_heat[env_i].detach().cpu().numpy().astype(np.float32, copy=False)
             )
-            snap[(side, "motor_load_avg")] = (
-                act.motor_load_avg[env_i].detach().cpu().numpy().astype(np.float32, copy=False)
-            )
+            # Per-joint power [W], canonical order — mirrors rewards.py _compute_cot_components
+            # *before* the per-leg sum. last_motor_tau / last_motor_vel are already canonical.
+            tau_m = act.last_motor_tau[env_i].detach().cpu().numpy()
+            vel_m = act.last_motor_vel[env_i].detach().cpu().numpy()
+            tau_s = np.where(tau_m < 0.0, tau_m * 0.9, tau_m / 0.8)
+            p = tau_s * vel_m
+            snap[(side, "joule")] = (self._power_coef * tau_s * tau_s).astype(np.float32, copy=False)
+            snap[(side, "mech")] = np.where(p < 0.0, p * 0.9, p / 0.9).astype(np.float32, copy=False)
 
         t = self._step_count * self._step_dt
         with self._lock:
@@ -201,12 +230,69 @@ class MotorTelemetryPlotter:
         )
         imgui.separator()
 
-        avail_h = imgui.get_content_region_avail().y
-        # Roughly equal thirds, leaving room for each combobox + label.
-        plot_h = max(140.0, (avail_h - 90.0) / 3.0)
+        if imgui.begin_tab_bar("telemetry_tabs"):
+            if imgui.begin_tab_item_simple("Motors"):
+                self._draw_motors_tab(xs, snap)
+                imgui.end_tab_item()
+            if imgui.begin_tab_item_simple("Power"):
+                self._draw_power_tab(xs, snap)
+                imgui.end_tab_item()
+            imgui.end_tab_bar()
 
+    def _draw_motors_tab(
+        self, xs: np.ndarray, snap: dict[tuple[str, str], np.ndarray]
+    ) -> None:
+        from imgui_bundle import imgui
+
+        avail_h = imgui.get_content_region_avail().y
+        plot_h = max(160.0, (avail_h - 70.0) / 2.0)  # two stacked subplots, each with a combo
         for key, signal, title, ylabel in _SUBPLOTS:
             self._draw_subplot(key, signal, title, ylabel, xs, snap, plot_h)
+
+    def _draw_power_tab(
+        self, xs: np.ndarray, snap: dict[tuple[str, str], np.ndarray]
+    ) -> None:
+        from imgui_bundle import imgui, implot
+
+        imgui.text("leg")
+        imgui.same_line()
+        imgui.set_next_item_width(120.0)
+        changed, sel = imgui.combo("##power_leg", self._power_sel, ["L", "R", "L+R"])
+        if changed:
+            self._power_sel = sel
+        sides = ("L",) if self._power_sel == 0 else ("R",) if self._power_sel == 1 else ("L", "R")
+
+        avail_h = imgui.get_content_region_avail().y
+        plot_h = max(160.0, (avail_h - 50.0) / 2.0)
+        af = implot.AxisFlags_.auto_fit.value
+
+        # Subplot 1 — per-joint power (Joule + Mech), one line per joint, colored by group.
+        imgui.text("Joint power consumption  (Joule heating + Mech work)")
+        if implot.begin_plot("##power_joints", imgui.ImVec2(-1.0, plot_h)):
+            implot.setup_axes("t [s]", "Power [W]", af, af)
+            if len(xs) >= 2:
+                per_joint = sum(snap[(s, "joule")] + snap[(s, "mech")] for s in sides)
+                for r, role in enumerate(self._roles):
+                    ys = np.ascontiguousarray(per_joint[:, r])
+                    implot.set_next_line_style(imgui.ImVec4(*_ROLE_GROUP_RGBA[role]), 1.5)
+                    implot.plot_line(role, xs, ys)
+            implot.end_plot()
+
+        # Subplot 2 — Joule heating (red) / Mechanical loss (blue) / Total = sum (green fill).
+        imgui.text("Power breakdown  (Joule heating / Mechanical loss / Total)")
+        if implot.begin_plot("##power_breakdown", imgui.ImVec2(-1.0, plot_h)):
+            implot.setup_axes("t [s]", "Power [W]", af, af)
+            if len(xs) >= 2:
+                joule_tot = np.ascontiguousarray(sum(snap[(s, "joule")].sum(axis=1) for s in sides))
+                mech_tot = np.ascontiguousarray(sum(snap[(s, "mech")].sum(axis=1) for s in sides))
+                total = np.ascontiguousarray(joule_tot + mech_tot)
+                implot.set_next_fill_style(imgui.ImVec4(0.55, 0.95, 0.45, 1.0), 0.45)
+                implot.plot_shaded("Total", xs, total, 0.0)
+                implot.set_next_line_style(imgui.ImVec4(1.00, 0.30, 0.25, 1.0), 1.5)
+                implot.plot_line("Joule heating", xs, joule_tot)
+                implot.set_next_line_style(imgui.ImVec4(0.30, 0.55, 1.00, 1.0), 1.5)
+                implot.plot_line("Mechanical loss", xs, mech_tot)
+            implot.end_plot()
 
     def _draw_subplot(
         self,
