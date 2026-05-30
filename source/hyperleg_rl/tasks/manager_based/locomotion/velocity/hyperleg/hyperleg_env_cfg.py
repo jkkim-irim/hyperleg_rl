@@ -36,9 +36,15 @@ from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR, ISAACLAB_NUCLEUS_DIR
 import isaaclab_tasks.manager_based.locomotion.velocity.mdp as mdp
 
 from hyperleg_rl.assets import HYPERLEG_CFG, HYPERLEG_WO_TOE_CFG
+from hyperleg_rl.sensors import ForceVectorContactSensorCfg
 from hyperleg_rl.tasks.manager_based.locomotion.velocity.hyperleg.mdp import (
-    motor_thermal_overuse,
-    motor_torque_symmetry,
+    actuator_power_consumption,
+    cot_components,
+    feet_air_time,
+    heel_grf_l1,
+    heel_grf_magnitude,
+    motor_heat,
+    motor_thermal_penalty,
 )
 
 from isaaclab.terrains.config.rough import ROUGH_TERRAINS_CFG  # isort: skip
@@ -94,6 +100,11 @@ class HyperLegSceneCfg(InteractiveSceneCfg):
     )
     robot = HYPERLEG_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
     contact_forces = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/.*", history_length=3, track_air_time=True)
+    feet_force_vis = ForceVectorContactSensorCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/.*_(tp|heel)",
+        history_length=1,
+        debug_vis=False,
+    )
     height_scanner = RayCasterCfg(
         prim_path="{ENV_REGEX_NS}/Robot/torso",
         offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 20.0)),
@@ -117,11 +128,11 @@ class HyperLegCommandsCfg:
 
     base_velocity = mdp.UniformVelocityCommandCfg(
         asset_name="robot",
-        resampling_time_range=(8.0, 10.0),
+        resampling_time_range=(6.0, 8.0),
         rel_standing_envs=0.02,
         rel_heading_envs=1.0,
-        heading_command=False,
-        heading_control_stiffness=0.5,
+        heading_command=True,
+        heading_control_stiffness=1.0,
         debug_vis=True,
         ranges=mdp.UniformVelocityCommandCfg.Ranges(
             lin_vel_x=(-0.5, 3.0),
@@ -139,8 +150,8 @@ class HyperLegActionsCfg:
     joint_pos = mdp.EMAJointPositionToLimitsActionCfg(
         asset_name="robot",
         joint_names=["L_.*", "R_.*"],
-        scale=1.0,
-        alpha=0.4,
+        scale=0.5,
+        alpha=0.2,
     )
 
 
@@ -166,6 +177,9 @@ class HyperLegObservationsCfg:
         joint_effort = ObsTerm(func=mdp.joint_effort)
         last_action = ObsTerm(func=mdp.last_action)
         base_pos_z = ObsTerm(func=mdp.base_pos_z)
+        cot_breakdown = ObsTerm(func=cot_components)
+        motor_heat_ema = ObsTerm(func=motor_heat)
+        heel_grf = ObsTerm(func=heel_grf_magnitude)
         height_scan = ObsTerm(
             func=mdp.height_scan,
             params={"sensor_cfg": SceneEntityCfg("height_scanner")},
@@ -184,27 +198,18 @@ class HyperLegObservationsCfg:
 @configclass
 class HyperLegRewardsCfg:
     """HyperLeg reward terms."""
-    # action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.005)
-    dof_acc_l2 = RewTerm(func=mdp.joint_acc_l2, weight=-2.0e-7)
-    # Normalized fold-of-threshold form: penalty = (heat/threshold - 1)^2.
-    # Per-joint thresholds calibrated to ~2-3x each motor's observed steady-state
-    # heat under the current policy, so every motor faces real pressure once it
-    # genuinely abuses its own continuous rating envelope. See dvcc/10 §5.1.
-    thermal_overuse = RewTerm(
-        func=motor_thermal_overuse,
+    termination_penalty = RewTerm(func=mdp.is_terminated, weight=-200.0)
+    power_consumption = RewTerm(func=actuator_power_consumption, weight=-1.0e-4)
+    thermal_penalty = RewTerm(
+        func=motor_thermal_penalty,
         weight=-10.0,
         params={
             "threshold": {
-                "HY": 0.05, "HR": 0.10, "HP": 0.40,
-                "KN": 0.50, "AK": 0.25, "FT": 0.30, "TO": 0.05,
+                "HY": 0.5, "HR": 0.5, "HP": 0.5,
+                "KN": 0.5, "AK": 0.5, "FT": 0.5, "TO": 0.5,
             },
         },
     )
-    torque_symmetry = RewTerm(
-        func=motor_torque_symmetry,
-        weight=-10.0,
-    )
-    termination_penalty = RewTerm(func=mdp.is_terminated, weight=-100.0)
     track_lin_vel_xy_exp = RewTerm(
         func=mdp.track_lin_vel_xy_exp,
         weight=2.0,
@@ -212,7 +217,7 @@ class HyperLegRewardsCfg:
     )
     track_ang_vel_z_exp = RewTerm(
         func=mdp.track_ang_vel_z_exp,
-        weight=0.5,
+        weight=1.0,
         params={"command_name": "base_velocity", "std": math.sqrt(0.2)},
     )
 
@@ -226,8 +231,8 @@ class HyperLegEventsCfg:
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
-            "static_friction_range": (0.8, 0.8),
-            "dynamic_friction_range": (0.6, 0.6),
+            "static_friction_range": (1.0, 1.0),
+            "dynamic_friction_range": (0.9, 0.9),
             "restitution_range": (0.0, 0.0),
             "num_buckets": 64,
         },
@@ -268,10 +273,10 @@ class HyperLegTerminationsCfg:
     """Episode termination terms for HyperLeg."""
 
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
-    torso_contact = DoneTerm(
+    illegal_contact = DoneTerm(
         func=mdp.illegal_contact,
         params={
-            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=["torso"]),
+            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=["torso", "l_hp", "r_hp", "l_kn", "r_kn"]),
             "threshold": 1.0,
         },
     )
@@ -288,7 +293,7 @@ class HyperLegCurriculumCfg:
 class HyperLegEnvCfg(ManagerBasedRLEnvCfg):
     """HyperLeg training environment (rough terrain)."""
 
-    scene: HyperLegSceneCfg = HyperLegSceneCfg(num_envs=4096, env_spacing=2.5)
+    scene: HyperLegSceneCfg = HyperLegSceneCfg(num_envs=4096, env_spacing=1.0)
     observations: HyperLegObservationsCfg = HyperLegObservationsCfg()
     actions: HyperLegActionsCfg = HyperLegActionsCfg()
     commands: HyperLegCommandsCfg = HyperLegCommandsCfg()
@@ -299,13 +304,15 @@ class HyperLegEnvCfg(ManagerBasedRLEnvCfg):
     sim: SimulationCfg = SimulationCfg(physx=PHYSX_CFG)
 
     def __post_init__(self):
-        self.decimation = 10
-        self.episode_length_s = 30.0
-        self.sim.dt = 0.002
+        self.decimation = 4
+        self.episode_length_s = 20.0
+        self.sim.dt = 0.005
         self.sim.render_interval = self.decimation
         self.sim.physics_material = self.scene.terrain.physics_material
         if self.scene.contact_forces is not None:
             self.scene.contact_forces.update_period = self.sim.dt
+        if self.scene.feet_force_vis is not None:
+            self.scene.feet_force_vis.update_period = self.sim.dt
         if self.scene.height_scanner is not None:
             self.scene.height_scanner.update_period = self.decimation * self.sim.dt
         if getattr(self.curriculum, "terrain_levels", None) is not None:
@@ -330,14 +337,19 @@ class HyperLegEnvCfg_PLAY(HyperLegEnvCfg):
         self.scene.num_envs = 1
         self.scene.env_spacing = 2.5
 
-        self.commands.base_velocity.ranges.lin_vel_x = (1.3, 1.3)
+        self.commands.base_velocity.ranges.lin_vel_x = (1.33, 1.33) # 1.33 is the default value
+        #self.commands.base_velocity.ranges.lin_vel_x = (0, 1.8)
         self.commands.base_velocity.ranges.lin_vel_y = (0.0, 0.0)
+        self.commands.base_velocity.ranges.ang_vel_z = (0.0, 0.0)
         self.commands.base_velocity.ranges.heading = (0.0, 0.0)
         self.observations.policy.enable_corruption = False
 
         # Deterministic play: drop all domain/reset/push randomization so the
         # robot starts from init_state and is never perturbed mid-episode.
-        self.events.physics_material = None
+        # TEST: pin robot body friction to 0/0 to verify the event actually
+        # takes effect (expect heavy slipping). Once confirmed, switch to 1.0/1.0.
+        self.events.physics_material.params["static_friction_range"] = (1.0, 1.0)
+        self.events.physics_material.params["dynamic_friction_range"] = (0.9, 0.9)
         self.events.reset_base.params["pose_range"] = {
             "x": (0.0, 0.0), "y": (0.0, 0.0), "yaw": (0.0, 0.0),
         }
