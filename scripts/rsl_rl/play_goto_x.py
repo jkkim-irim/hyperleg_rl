@@ -63,10 +63,19 @@ parser.add_argument("--speed", type=float, default=1.33, help="Constant forward 
 parser.add_argument("--dev_max", type=float, default=0.5, help="Path deviation [m] that maps the trace color to full red.")
 parser.add_argument("--disable_debug_draw", action="store_true", default=False, help="Turn off the debug_draw reference line and trajectory trace.")
 parser.add_argument("--trials", type=int, default=10, help="Number of arrival trials to log, then exit.")
-# -- steering gains (defaults tuned for firm line-holding; raise further to hold harder)
-parser.add_argument("--k_ct", type=float, default=2.5, help="Cross-track gain: world-y error -> desired heading [rad/m].")
-parser.add_argument("--kp_yaw", type=float, default=1.5, help="Heading-error gain -> yaw-rate command [1/s].")
-parser.add_argument("--max_heading", type=float, default=0.4, help="Cap on desired heading toward the line [rad].")
+# -- per-trial power CSV logging (reproduces IROS/ICCAS Table II protocol)
+parser.add_argument("--log_csv", action="store_true", default=False,
+    help="Log per-trial steady-walking power CSVs to logs/ICCAS/<variant>_<ts>/.")
+parser.add_argument("--log_t_start", type=float, default=2.0,
+    help="Episode-time [s] when power logging opens (skip startup transient).")
+parser.add_argument("--log_t_end", type=float, default=14.0,
+    help="Episode-time [s] when power logging closes (or earlier on arrival/reset).")
+# -- steering gains (kp_yaw matches the training-time heading_control_stiffness=0.5 so the wz
+#    commands stay inside the policy's training distribution; k_ct=10 keeps cross-track tight via
+#    aggressive heading_des while wz remains gentle).
+parser.add_argument("--k_ct", type=float, default=10.0, help="Cross-track gain: world-y error -> desired heading [rad/m].")
+parser.add_argument("--kp_yaw", type=float, default=1.0, help="Heading-error gain -> yaw-rate command [1/s]. Default matches env's heading_control_stiffness so wz stays in training distribution.")
+parser.add_argument("--max_heading", type=float, default=0.25, help="Cap on desired heading toward the line [rad] (~14 deg; cos=0.969 → 3% x-speed loss worst case).")
 parser.add_argument("--wz_max", type=float, default=1.0, help="Yaw-rate command cap [rad/s] (keep <= 1.0 for training range).")
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
@@ -152,8 +161,8 @@ class WorldXGoalController:
     All quantities are batched over envs.
     """
 
-    def __init__(self, env, goal_x: float, speed: float, k_ct: float = 2.5,
-                 kp_yaw: float = 1.5, max_heading: float = 0.4, wz_max: float = 1.0):
+    def __init__(self, env, goal_x: float, speed: float, k_ct: float = 10.0,
+                 kp_yaw: float = 1.0, max_heading: float = 0.25, wz_max: float = 1.0):
         self.robot = env.unwrapped.scene["robot"]
         self.cmd_term = env.unwrapped.command_manager.get_term("base_velocity")
         device = env.unwrapped.device
@@ -299,6 +308,23 @@ def main(env_cfg: ManagerBasedRLEnvCfg, agent_cfg: RslRlBaseRunnerCfg):
             telemetry = MotorTelemetryPlotter(env)
             telemetry.start()
 
+    # optional per-trial power CSV logger (env-0 only).
+    logger = None
+    if args_cli.log_csv:
+        from hyperleg_rl.viz import PowerCSVLogger  # noqa: PLC0415
+
+        logger = PowerCSVLogger(
+            env,
+            log_root=_PROJECT_LOGS_ROOT / "ICCAS",
+            t_start_s=args_cli.log_t_start,
+            t_end_s=args_cli.log_t_end,
+        )
+        print(
+            f"[INFO] CSV logging armed ({logger.variant_prefix}); window "
+            f"[{args_cli.log_t_start:.2f}, {args_cli.log_t_end:.2f}] s. "
+            f"Out dir on first commit: {logger.out_dir}"
+        )
+
     announced = False  # arrival already logged this episode (env 0)
     ref_drawn = False
     trial = 0
@@ -330,6 +356,11 @@ def main(env_cfg: ManagerBasedRLEnvCfg, agent_cfg: RslRlBaseRunnerCfg):
         if telemetry is not None:
             telemetry.update()
 
+        # Per-episode time, shared by the power logger and the arrival print.
+        t_ep_s = env.unwrapped.episode_length_buf[0].item() * dt
+        if logger is not None:
+            logger.step(t_ep_s)
+
         # Trajectory trace: drop a point at the torso world position each control step
         # (50 Hz). Color encodes the torso's distance from the reference segment
         # (0,0)->(goal_x,0): inside the x-range that distance is just |y| (cross-track),
@@ -348,17 +379,27 @@ def main(env_cfg: ManagerBasedRLEnvCfg, agent_cfg: RslRlBaseRunnerCfg):
             draw_iface.draw_points(trace_pts, colors, [_TRACE_SIZE] * len(trace_pts))
 
         # Log one line per trial: the sim time taken to reach the goal, measured from the
-        # episode start (env 0). Re-arm on reset; exit after the requested trial count.
-        if bool(dones[0]):
-            announced = False
-        elif bool(controller.arrived[0]) and not announced:
-            arrival_s = env.unwrapped.episode_length_buf[0].item() * dt
+        # episode start (env 0). Order: check arrival BEFORE done so a termination on the
+        # arrival step still commits the trial. Re-arm on reset; exit after --trials.
+        just_arrived = bool(controller.arrived[0]) and not announced
+        if just_arrived:
             trial += 1
-            arrival_times.append(arrival_s)
-            print(f"[{trial}/{args_cli.trials}] 도달 시간 {arrival_s:.2f}초")
+            arrival_times.append(t_ep_s)
+            print(f"[{trial}/{args_cli.trials}] 도달 시간 {t_ep_s:.2f}초")
+            if logger is not None:
+                path = logger.commit_trial(trial)
+                if path is not None:
+                    print(f"  power CSV → {path}")
             announced = True
             if trial >= args_cli.trials:
                 break
+
+        if bool(dones[0]):
+            if not announced and logger is not None:
+                logger.discard_trial()
+            if logger is not None:
+                logger.on_reset()
+            announced = False
 
         # real-time pacing
         sleep_time = dt - (time.time() - start_time)
@@ -368,6 +409,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg, agent_cfg: RslRlBaseRunnerCfg):
     if arrival_times:
         mean_s = sum(arrival_times) / len(arrival_times)
         print(f"[done] {len(arrival_times)}회 평균 도달 시간 {mean_s:.2f}초 — 시뮬레이션 정지. 창을 닫으면 종료됩니다.")
+    if logger is not None and logger.trial_count > 0:
+        print(f"[done] {logger.trial_count} power CSV(s) written under {logger.out_dir}")
     # Stop stepping the policy/physics but keep the viewer open with every trajectory
     # retained: render in place (no env.step => the robot is frozen) until the window closes.
     while simulation_app.is_running():
