@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 import torch
 
 from isaaclab.actuators.actuator_pd import IdealPDActuator
+from isaaclab.sim import SimulationContext
 from isaaclab.utils.types import ArticulationActions
 
 if TYPE_CHECKING:
@@ -42,15 +43,19 @@ class CoupledLegActuator(IdealPDActuator):
     def __init__(self, cfg: "CoupledLegActuatorCfg", *args, **kwargs) -> None:
         super().__init__(cfg, *args, **kwargs)
 
-        if self.num_joints != 7:
+        # Canonical role count N. Default 7-joint leg; 6 supported for the
+        # toe-ablation variant (drops the trailing TO role/column).
+        if self.num_joints not in (6, 7):
             raise ValueError(
-                "CoupledLegActuator requires exactly 7 joints per leg "
+                "CoupledLegActuator requires 6 or 7 joints per leg "
                 f"(got {self.num_joints} for joints {self._joint_names})."
             )
+        n = self.num_joints
+        role_suffixes = _ROLE_SUFFIXES[:n]
 
         # Map canonical role index -> USD index, by joint-name suffix.
         role_to_usd: list[int] = []
-        for suffix in _ROLE_SUFFIXES:
+        for suffix in role_suffixes:
             matches = [i for i, name in enumerate(self._joint_names) if name.endswith(suffix)]
             if len(matches) != 1:
                 raise ValueError(
@@ -64,14 +69,14 @@ class CoupledLegActuator(IdealPDActuator):
         if self.cfg.jacobian_joint_to_motor is None:
             raise ValueError("jacobian_joint_to_motor must be provided.")
         J = torch.tensor(self.cfg.jacobian_joint_to_motor, dtype=torch.float32, device=self._device)
-        if J.shape != (7, 7):
-            raise ValueError(f"jacobian_joint_to_motor must be 7×7, got {tuple(J.shape)}.")
+        if J.shape != (n, n):
+            raise ValueError(f"jacobian_joint_to_motor must be {n}×{n}, got {tuple(J.shape)}.")
         self._J = J
         self._J_T = J.T.contiguous()
         self._J_inv = torch.linalg.inv(J)
 
-        # Sanity: J · J^{-1} ≈ I_7
-        eye = torch.eye(7, dtype=J.dtype, device=self._device)
+        # Sanity: J · J^{-1} ≈ I_n
+        eye = torch.eye(n, dtype=J.dtype, device=self._device)
         if not torch.allclose(self._J @ self._J_inv, eye, atol=1e-4):
             raise ValueError("Provided jacobian_joint_to_motor is numerically singular.")
 
@@ -96,13 +101,23 @@ class CoupledLegActuator(IdealPDActuator):
         self._activation_vel = self._parse_joint_parameter(self.cfg.activation_vel, float("inf"))
         self._friction_viscous = self._parse_joint_parameter(self.cfg.friction_viscous, 0.0)
 
-        # Diagnostic buffers (canonical [HY HR HP KN AK FT TO] order). Updated every compute().
+        # Diagnostic buffers (canonical [HY HR HP KN AK FT (TO)] order). Updated every compute().
         # Useful for verifying CA: τ_j_KN ≈ -31.11·sum(last_motor_tau[3:]) when friction is small.
-        self.last_motor_tau = torch.zeros(self._num_envs, 7, device=self._device)
+        self.last_motor_tau = torch.zeros(self._num_envs, n, device=self._device)
         self.last_motor_vel = torch.zeros_like(self.last_motor_tau)
 
+        # Thermal proxy: EMA of (τ_motor / τ_cont)² per motor (1st-order RC heat model,
+        # equivalent to motor I²t protection). 1.0 = sustained operation at the rated
+        # continuous torque, i.e. steady-state thermal limit. Read by reward / obs.
+        self.motor_heat = torch.zeros_like(self.last_motor_tau)
+        sim_dt = SimulationContext.instance().get_physics_dt()
+        self._thermal_alpha = float(sim_dt / self.cfg.thermal_time_constant)
+
     def reset(self, env_ids: Sequence[int]) -> None:
-        pass
+        if env_ids is None or (hasattr(env_ids, "__len__") and len(env_ids) == self.motor_heat.shape[0]):
+            self.motor_heat.zero_()
+        else:
+            self.motor_heat[env_ids] = 0.0
 
     def compute(
         self,
@@ -131,6 +146,10 @@ class CoupledLegActuator(IdealPDActuator):
         motor_tau_clipped = self._clip_motor_4quadrant(motor_tau, motor_vel)
         self.last_motor_tau[:] = motor_tau_clipped
         self.last_motor_vel[:] = motor_vel
+
+        # 4b. Thermal EMA update — proxy for motor winding heating (1st-order RC).
+        ratio = motor_tau_clipped / self._motor_effort_limit
+        self.motor_heat.mul_(1.0 - self._thermal_alpha).add_(ratio.square(), alpha=self._thermal_alpha)
 
         # 5. motor → joint: τ_j = J^T · τ_m  (batched rows: τ_m @ J)
         joint_tau_c_out = motor_tau_clipped @ self._J

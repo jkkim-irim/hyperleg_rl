@@ -3,6 +3,24 @@
 
 """HyperLeg-specific MDP terms (rewards, observations, terminations)."""
 
-from .rewards import motor_thermal_overuse, motor_torque_symmetry
+from .observations import (
+    cot_components,
+    feet_air_time,
+    heel_grf_magnitude,
+    motor_heat,
+)
+from .rewards import (
+    actuator_power_consumption,
+    heel_grf_l1,
+    motor_thermal_penalty,
+)
 
-__all__ = ["motor_thermal_overuse", "motor_torque_symmetry"]
+__all__ = [
+    "actuator_power_consumption",
+    "cot_components",
+    "feet_air_time",
+    "heel_grf_l1",
+    "heel_grf_magnitude",
+    "motor_heat",
+    "motor_thermal_penalty",
+]

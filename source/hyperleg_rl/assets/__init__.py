@@ -3,6 +3,6 @@
 
 """Project assets: HyperLeg biped robot configs and paths."""
 
-from hyperleg_rl.assets.hyperleg import HYPERLEG_CFG
+from hyperleg_rl.assets.hyperleg import HYPERLEG_CFG, HYPERLEG_WO_TOE_CFG
 
-__all__ = ["HYPERLEG_CFG"]
+__all__ = ["HYPERLEG_CFG", "HYPERLEG_WO_TOE_CFG"]

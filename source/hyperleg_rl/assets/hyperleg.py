@@ -90,6 +90,11 @@ def _leg_actuator_cfg(side: str, with_toe: bool = True) -> CoupledLegActuatorCfg
         f"{p}KN": 0.10, f"{p}AK": 0.10,
         f"{p}FT": 0.10, f"{p}TO": 0.10,
     }
+    # motor_effort_limit = {
+    #     f"{p}HY": 2.52, f"{p}HR": 2.52, f"{p}HP": 2.52,
+    #     f"{p}KN": 1.34,
+    #     f"{p}AK": 0.815, f"{p}FT": 0.815, f"{p}TO": 0.815,
+    # }
     motor_effort_limit = {
         f"{p}HY": 5.04, f"{p}HR": 5.04, f"{p}HP": 5.04,
         f"{p}KN": 2.68,
@@ -166,7 +171,6 @@ def _make_hyperleg_cfg(usd_path: Path, with_toe: bool) -> ArticulationCfg:
             "left_leg": _leg_actuator_cfg("L", with_toe=with_toe),
             "right_leg": _leg_actuator_cfg("R", with_toe=with_toe),
         },
-        soft_joint_pos_limit_factor=0.95,
     )
 
 

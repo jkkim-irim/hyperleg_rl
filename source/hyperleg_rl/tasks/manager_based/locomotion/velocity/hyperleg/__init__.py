@@ -30,3 +30,23 @@ gym.register(
         "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:HyperLegPPORunnerCfg",
     },
 )
+
+gym.register(
+    id="HyperLeg-Locomotion-WoToe-v0",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": f"{__name__}.hyperleg_env_cfg:HyperLegWoToeEnvCfg",
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:HyperLegPPORunnerCfg",
+    },
+)
+
+gym.register(
+    id="HyperLeg-Locomotion-WoToe-Play-v0",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": f"{__name__}.hyperleg_env_cfg:HyperLegWoToeEnvCfg_PLAY",
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:HyperLegPPORunnerCfg",
+    },
+)
