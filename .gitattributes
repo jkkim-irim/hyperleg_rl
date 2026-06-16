@@ -1,0 +1,4 @@
+# Legacy SolidWorks export logs carry non-UTF-8 (cp949) bytes. Marking them binary
+# keeps `git diff` from emitting their raw content, which otherwise crashes RSL-RL's
+# code-state logger (utf-8 write of the diff) at the start of training.
+hyperleg_lagacy_ref_code/**/export.log binary

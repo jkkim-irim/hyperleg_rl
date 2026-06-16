@@ -9,8 +9,8 @@ from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlPpoActorCriticCfg, R
 @configclass
 class HyperLegPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 24
-    max_iterations = 3000
-    save_interval = 100
+    max_iterations = 1000
+    save_interval = 200
     experiment_name = "hyperleg_locomotion"
     logger = "wandb"
     wandb_project = "hyperleg_locomotion"
@@ -29,10 +29,28 @@ class HyperLegPPORunnerCfg(RslRlOnPolicyRunnerCfg):
         entropy_coef=0.01,
         num_learning_epochs=5,
         num_mini_batches=4,
-        learning_rate=1.0e-4,
+        learning_rate=1.0e-3,
         schedule="adaptive",
         gamma=0.99,
         lam=0.95,
         desired_kl=0.01,
         max_grad_norm=1.0,
     )
+
+
+@configclass
+class HyperLegGotoPPORunnerCfg(HyperLegPPORunnerCfg):
+    """End-to-end goal-reaching locomotion (same big actor as the walker)."""
+
+    experiment_name = "hyperleg_goto"
+    wandb_project = "hyperleg_goto"
+
+
+@configclass
+class HyperLegTtestPPORunnerCfg(HyperLegPPORunnerCfg):
+    """End-to-end T-test navigation (same actor size as locomotion / goto)."""
+
+    max_iterations = 3500
+    save_interval = 200
+    experiment_name = "hyperleg_ttest"
+    wandb_project = "hyperleg_ttest"

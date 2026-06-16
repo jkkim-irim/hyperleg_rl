@@ -70,12 +70,11 @@ parser.add_argument("--log_t_start", type=float, default=2.0,
     help="Episode-time [s] when power logging opens (skip startup transient).")
 parser.add_argument("--log_t_end", type=float, default=14.0,
     help="Episode-time [s] when power logging closes (or earlier on arrival/reset).")
-# -- steering gains (kp_yaw matches the training-time heading_control_stiffness=0.5 so the wz
-#    commands stay inside the policy's training distribution; k_ct=10 keeps cross-track tight via
-#    aggressive heading_des while wz remains gentle).
-parser.add_argument("--k_ct", type=float, default=10.0, help="Cross-track gain: world-y error -> desired heading [rad/m].")
-parser.add_argument("--kp_yaw", type=float, default=1.0, help="Heading-error gain -> yaw-rate command [1/s]. Default matches env's heading_control_stiffness so wz stays in training distribution.")
-parser.add_argument("--max_heading", type=float, default=0.25, help="Cap on desired heading toward the line [rad] (~14 deg; cos=0.969 → 3% x-speed loss worst case).")
+# -- steering gains (wz_max stays at the trained ang_vel_z range; raise k_ct / kp_yaw / max_heading
+#    if the trace still drifts — too-stiff gains can weave at 50 Hz due to policy lag).
+parser.add_argument("--k_ct", type=float, default=25.0, help="Cross-track gain: world-y error -> desired heading [rad/m].")
+parser.add_argument("--kp_yaw", type=float, default=2.0, help="Heading-error gain -> yaw-rate command [1/s].")
+parser.add_argument("--max_heading", type=float, default=0.40, help="Cap on desired heading toward the line [rad] (~23 deg).")
 parser.add_argument("--wz_max", type=float, default=1.0, help="Yaw-rate command cap [rad/s] (keep <= 1.0 for training range).")
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
@@ -161,8 +160,8 @@ class WorldXGoalController:
     All quantities are batched over envs.
     """
 
-    def __init__(self, env, goal_x: float, speed: float, k_ct: float = 10.0,
-                 kp_yaw: float = 1.0, max_heading: float = 0.25, wz_max: float = 1.0):
+    def __init__(self, env, goal_x: float, speed: float, k_ct: float = 25.0,
+                 kp_yaw: float = 2.0, max_heading: float = 0.40, wz_max: float = 1.0):
         self.robot = env.unwrapped.scene["robot"]
         self.cmd_term = env.unwrapped.command_manager.get_term("base_velocity")
         device = env.unwrapped.device
@@ -178,9 +177,8 @@ class WorldXGoalController:
         self.goal_xy = origins[:, :2].clone()
         self.goal_xy[:, 0] += goal_x
         self.speed = float(speed)
-        # Steering gains / limits (tunable via CLI). Raising k_ct / kp_yaw holds the line
-        # harder; keep wz_max <= 1.0 to stay inside the trained ang_vel_z range, and note
-        # that too-stiff gains can make the path weave (policy lag at 50 Hz).
+        # Steering gains / limits (tunable via CLI). Defaults are tuned for tight straight-line
+        # tracking; keep wz_max <= 1.0 for the trained ang_vel_z range.
         self.K_CT = float(k_ct)
         self.MAX_HEADING = float(max_heading)
         self.KP_YAW = float(kp_yaw)
@@ -411,6 +409,9 @@ def main(env_cfg: ManagerBasedRLEnvCfg, agent_cfg: RslRlBaseRunnerCfg):
         print(f"[done] {len(arrival_times)}회 평균 도달 시간 {mean_s:.2f}초 — 시뮬레이션 정지. 창을 닫으면 종료됩니다.")
     if logger is not None and logger.trial_count > 0:
         print(f"[done] {logger.trial_count} power CSV(s) written under {logger.out_dir}")
+        tw_paths = logger.write_torque_speed_csvs()
+        if tw_paths is not None:
+            print(f"[done] ankle τ-ω CSVs → {tw_paths[0].name}, {tw_paths[1].name}")
     # Stop stepping the policy/physics but keep the viewer open with every trajectory
     # retained: render in place (no env.step => the robot is frozen) until the window closes.
     while simulation_app.is_running():

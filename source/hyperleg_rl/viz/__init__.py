@@ -4,6 +4,6 @@
 """Lightweight visualization helpers for HyperLeg play mode."""
 
 from .motor_telemetry import MotorTelemetryPlotter
-from .power_logger import PowerCSVLogger
+from .power_logger import Fig4OperatingPointLogger, PowerCSVLogger
 
-__all__ = ["MotorTelemetryPlotter", "PowerCSVLogger"]
+__all__ = ["Fig4OperatingPointLogger", "MotorTelemetryPlotter", "PowerCSVLogger"]

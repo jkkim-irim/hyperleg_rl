@@ -52,6 +52,18 @@ _J_PER_LEG = (
 # Toe-ablation Jacobian: drop the TO row & column (6×6).
 _J_PER_LEG_WO_TOE = tuple(row[:6] for row in _J_PER_LEG[:6])
 
+# Joint-side reflected rotor inertia [kg·m²] — legacy ``berkeley_humanoid.py``
+# (γ²·I_rotor; hip U10 @ 25:1, CA leg RI70/RI60 @ standing-pose γ).
+_ARMATURE_BY_ROLE: dict[str, float] = {
+    "HY": 0.136090,
+    "HR": 0.136090,
+    "HP": 0.136090,
+    "KN": 0.045434,
+    "AK": 0.014442,
+    "FT": 0.004388,
+    "TO": 0.003641,
+}
+
 
 def _leg_actuator_cfg(side: str, with_toe: bool = True) -> CoupledLegActuatorCfg:
     """One ``CoupledLegActuatorCfg`` covering all joints of side L or R.
@@ -68,18 +80,15 @@ def _leg_actuator_cfg(side: str, with_toe: bool = True) -> CoupledLegActuatorCfg
     stiffness = {
         f"{p}HY": 60.0, f"{p}HR": 70.0, f"{p}HP": 150.0,
         f"{p}KN": 220.0, f"{p}AK": 40.0,
-        f"{p}FT": 6.0, f"{p}TO": 10.0,
+        f"{p}FT": 6.0, f"{p}TO": 6.0,
     }
     damping = {
         f"{p}HY": 4.0, f"{p}HR": 5.0, f"{p}HP": 17.0,
         f"{p}KN": 14.0, f"{p}AK": 4.0,
         f"{p}FT": 0.5, f"{p}TO": 0.6,
     }
-    armature = {
-        f"{p}HY": 0.01, f"{p}HR": 0.01, f"{p}HP": 0.01,
-        f"{p}KN": 0.01, f"{p}AK": 0.01,
-        f"{p}FT": 0.01, f"{p}TO": 0.01,
-    }
+    roles = ("HY", "HR", "HP", "KN", "AK", "FT", "TO") if with_toe else ("HY", "HR", "HP", "KN", "AK", "FT")
+    armature = {f"{p}{role}": _ARMATURE_BY_ROLE[role] for role in roles}
     friction_coulomb = {
         f"{p}HY": 3.30, f"{p}HR": 3.30, f"{p}HP": 3.30,
         f"{p}KN": 5.59, f"{p}AK": 2.09,
@@ -112,16 +121,22 @@ def _leg_actuator_cfg(side: str, with_toe: bool = True) -> CoupledLegActuatorCfg
         f"{p}AK": 366.0, f"{p}FT": 366.0, f"{p}TO": 366.0,   # 20,970 deg/s
     }
     if not with_toe:
-        for d in (stiffness, damping, armature, friction_coulomb, friction_viscous,
-                  motor_effort_limit, motor_saturation_effort, motor_velocity_limit):
+        for d in (
+            stiffness,
+            damping,
+            friction_coulomb,
+            friction_viscous,
+            motor_effort_limit,
+            motor_saturation_effort,
+            motor_velocity_limit,
+        ):
             d.pop(f"{p}TO")
     return CoupledLegActuatorCfg(
         joint_names_expr=joint_names,
         # Joint-space PD (paper eq. 4 form)
         stiffness=stiffness,
         damping=damping,
-        # Joint-space armature (PhysX adds to mass-matrix diagonal). Uniform 0.01
-        # as a stability baseline; refine per-joint with γ²·I_rotor if needed.
+        # Joint-space armature (PhysX adds to mass-matrix diagonal): γ²·I_rotor.
         armature=armature,
         # Joint-side coulomb + viscous friction (paper Table I, eq. 5)
         friction_coulomb=friction_coulomb,

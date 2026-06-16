@@ -38,10 +38,10 @@ import isaaclab_tasks.manager_based.locomotion.velocity.mdp as mdp
 from hyperleg_rl.assets import HYPERLEG_CFG, HYPERLEG_WO_TOE_CFG
 from hyperleg_rl.sensors import ForceVectorContactSensorCfg
 from hyperleg_rl.tasks.manager_based.locomotion.velocity.hyperleg.mdp import (
-    actuator_power_consumption,
+    command_lin_vel_x_levels,
+    cost_of_transport_penalty,
     cot_components,
     feet_air_time,
-    heel_grf_l1,
     heel_grf_magnitude,
     motor_heat,
     motor_thermal_penalty,
@@ -135,7 +135,7 @@ class HyperLegCommandsCfg:
         heading_control_stiffness=1.0,
         debug_vis=True,
         ranges=mdp.UniformVelocityCommandCfg.Ranges(
-            lin_vel_x=(-0.5, 3.0),
+            lin_vel_x=(-0.5, 1.0),
             lin_vel_y=(-0.5, 0.5),
             ang_vel_z=(-1.0, 1.0),
             heading=(-math.pi, math.pi),          
@@ -199,7 +199,11 @@ class HyperLegObservationsCfg:
 class HyperLegRewardsCfg:
     """HyperLeg reward terms."""
     termination_penalty = RewTerm(func=mdp.is_terminated, weight=-200.0)
-    power_consumption = RewTerm(func=actuator_power_consumption, weight=-1.0e-4)
+    cost_of_transport = RewTerm(
+        func=cost_of_transport_penalty,
+        weight=-1.0e-4,  # ≈ -0.04 / (32 kg · 9.81 m/s²) — nominal CoT scale in P/v
+        params={"command_name": "base_velocity", "velocity_min": 0.1},
+    )
     thermal_penalty = RewTerm(
         func=motor_thermal_penalty,
         weight=-10.0,
@@ -256,7 +260,7 @@ class HyperLegEventsCfg:
         func=mdp.reset_joints_by_offset,
         mode="reset",
         params={
-            "position_range": (-0.2, 0.2),
+            "position_range": (-0.1, 0.1),
             "velocity_range": (0.0, 0.0),
         },
     )
@@ -280,13 +284,28 @@ class HyperLegTerminationsCfg:
             "threshold": 1.0,
         },
     )
+    bad_orientation = DoneTerm(
+        func=mdp.bad_orientation,
+        params={"limit_angle": 0.8},
+    )
 
 
 @configclass
 class HyperLegCurriculumCfg:
-    """Terrain difficulty curriculum."""
+    """Terrain difficulty and forward velocity command curriculum."""
 
     terrain_levels = CurrTerm(func=mdp.terrain_levels_vel)
+    command_lin_vel_x_levels = CurrTerm(
+        func=command_lin_vel_x_levels,
+        params={
+            "num_steps_per_env": 24,
+            "iters_per_step": 100,
+            "vel_step": 0.2,
+            "initial_max": 1.0,
+            "final_max": 2.0,
+            "command_name": "base_velocity",
+        },
+    )
 
 
 @configclass
@@ -333,16 +352,17 @@ class HyperLegEnvCfg_PLAY(HyperLegEnvCfg):
         self.scene.terrain.terrain_type = "plane"
         self.scene.terrain.terrain_generator = None
         self.curriculum.terrain_levels = None
+        self.curriculum.command_lin_vel_x_levels = None
 
         self.scene.num_envs = 1
         self.scene.env_spacing = 2.5
 
+
+
         self.commands.base_velocity.ranges.lin_vel_x = (1.33, 1.33) # 1.33 is the default value
-        #self.commands.base_velocity.ranges.lin_vel_x = (0, 1.8)
         self.commands.base_velocity.ranges.lin_vel_y = (0.0, 0.0)
         self.commands.base_velocity.ranges.ang_vel_z = (0.0, 0.0)
         self.commands.base_velocity.ranges.heading = (0.0, 0.0)
-        self.observations.policy.enable_corruption = False
 
         # Deterministic play: drop all domain/reset/push randomization so the
         # robot starts from init_state and is never perturbed mid-episode.

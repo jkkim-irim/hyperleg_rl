@@ -40,6 +40,19 @@ parser.add_argument(
     default=False,
     help="Open a live plot of joint torque / motor heat / motor load_avg for env 0.",
 )
+parser.add_argument(
+    "--fig4_operating_point",
+    action="store_true",
+    default=False,
+    help="Log lower-leg motor τ-ω (AK/FT/KN[/TO]) from all envs until 20k rows, "
+    "then write motor_tw.csv / joint_tw.csv under logs/ICCAS/Fig4/<timestamp>/.",
+)
+parser.add_argument(
+    "--fig4_target_rows",
+    type=int,
+    default=20_000,
+    help="Row count per Fig. 4 CSV before stopping (--fig4_operating_point).",
+)
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
 # append AppLauncher cli args
@@ -217,6 +230,16 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
             telemetry = MotorTelemetryPlotter(env)
             telemetry.start()
 
+    fig4_logger = None
+    if args_cli.fig4_operating_point:
+        from hyperleg_rl.viz import Fig4OperatingPointLogger
+
+        fig4_logger = Fig4OperatingPointLogger(
+            env,
+            log_root=_PROJECT_LOGS_ROOT / "ICCAS",
+            target_rows=args_cli.fig4_target_rows,
+        )
+
     # reset environment
     obs = env.get_observations()
     timestep = 0
@@ -231,6 +254,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
             obs, _, dones, _ = env.step(actions)
             if telemetry is not None:
                 telemetry.update()
+            if fig4_logger is not None and fig4_logger.step():
+                break
             # reset recurrent states for episodes that have terminated
             if version.parse(installed_version) >= version.parse("4.0.0"):
                 policy.reset(dones)
@@ -246,6 +271,14 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         sleep_time = dt - (time.time() - start_time)
         if args_cli.real_time and sleep_time > 0:
             time.sleep(sleep_time)
+
+    if fig4_logger is not None and fig4_logger.row_count > 0:
+        motor_path, joint_path = fig4_logger.write_csvs()
+        print(
+            f"[done] Fig. 4 operating points ({fig4_logger.row_count} rows) → "
+            f"{fig4_logger.out_dir}"
+        )
+        print(f"  {motor_path.name}, {joint_path.name}")
 
     if telemetry is not None:
         telemetry.stop()

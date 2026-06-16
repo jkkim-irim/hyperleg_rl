@@ -17,9 +17,14 @@ import cli_args  # isort: skip
 
 # add argparse arguments
 parser = argparse.ArgumentParser(description="Train an RL agent with RSL-RL.")
-parser.add_argument("--video", action="store_true", default=False, help="Record videos during training.")
+parser.add_argument("--video", action="store_true", default=True, help="Record videos during training.")
 parser.add_argument("--video_length", type=int, default=200, help="Length of the recorded video (in steps).")
-parser.add_argument("--video_interval", type=int, default=2000, help="Interval between video recordings (in steps).")
+parser.add_argument(
+    "--video_interval",
+    type=int,
+    default=None,
+    help="Interval between video recordings (in learning iterations). Defaults to save_interval.",
+)
 parser.add_argument("--num_envs", type=int, default=None, help="Number of environments to simulate.")
 parser.add_argument("--task", type=str, default=None, help="Name of the task.")
 parser.add_argument(
@@ -99,6 +104,7 @@ from isaaclab_rl.rsl_rl import RslRlBaseRunnerCfg, RslRlVecEnvWrapper, handle_de
 
 import isaaclab_tasks  # noqa: F401
 import hyperleg_rl.tasks  # noqa: F401 — register hyperleg gym envs
+from hyperleg_rl.run_naming import build_hyperleg_run_name
 from isaaclab_tasks.utils import get_checkpoint_path
 from isaaclab_tasks.utils.hydra import hydra_task_config
 
@@ -154,13 +160,16 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     log_root_path = str(_PROJECT_LOGS_ROOT / "rsl_rl" / agent_cfg.experiment_name)
     log_root_path = os.path.abspath(log_root_path)
     print(f"[INFO] Logging experiment in directory: {log_root_path}")
-    # specify directory for logging runs: {time-stamp}_{run_name}
-    log_dir = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    task_name = args_cli.task.split(":")[-1]
+    if task_name.startswith("HyperLeg-"):
+        log_dir = build_hyperleg_run_name(task_name, env_cfg, agent_cfg, agent_cfg.run_name)
+    else:
+        log_dir = datetime.now().strftime("%Y-%m-%d_%H-%M")
+        if agent_cfg.run_name:
+            log_dir += f"_{agent_cfg.run_name}"
     # The Ray Tune workflow extracts experiment name using the logging line below, hence, do not
     # change it (see PR #2346, comment-2819298849)
     print(f"Exact experiment name requested from command line: {log_dir}")
-    if agent_cfg.run_name:
-        log_dir += f"_{agent_cfg.run_name}"
     log_dir = os.path.join(log_root_path, log_dir)
 
     # set the IO descriptors export flag if requested
@@ -187,13 +196,18 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # wrap for video recording
     if args_cli.video:
+        video_interval_iters = (
+            args_cli.video_interval if args_cli.video_interval is not None else agent_cfg.save_interval
+        )
+        video_step_interval = video_interval_iters * agent_cfg.num_steps_per_env
         video_kwargs = {
             "video_folder": os.path.join(log_dir, "videos", "train"),
-            "step_trigger": lambda step: step % args_cli.video_interval == 0,
+            "step_trigger": lambda step, interval=video_step_interval: step % interval == 0,
             "video_length": args_cli.video_length,
             "disable_logger": True,
         }
         print("[INFO] Recording videos during training.")
+        print(f"[INFO] video_interval: {video_interval_iters} iters -> {video_step_interval} env steps")
         print_dict(video_kwargs, nesting=4)
         env = gym.wrappers.RecordVideo(env, **video_kwargs)
 
@@ -209,6 +223,23 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         runner = DistillationRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device)
     else:
         raise ValueError(f"Unsupported runner class: {agent_cfg.class_name}")
+
+    if args_cli.video and agent_cfg.logger == "wandb":
+        _orig_init_logging_writer = runner.logger.init_logging_writer
+
+        def init_logging_writer_and_patch() -> None:
+            _orig_init_logging_writer()
+            writer = runner.logger.writer
+            _orig_save_video = writer.save_video
+
+            def save_video_and_delete(video: Path, it: int) -> None:
+                _orig_save_video(video, it)
+                if video.name in writer.logged_videos:
+                    video.unlink()
+
+            writer.save_video = save_video_and_delete
+
+        runner.logger.init_logging_writer = init_logging_writer_and_patch
     # write git state to logs
     runner.add_git_repo_to_log(__file__)
     # load the checkpoint
@@ -223,6 +254,10 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # run training
     runner.learn(num_learning_iterations=agent_cfg.max_iterations, init_at_random_ep_len=True)
+
+    if args_cli.video and agent_cfg.logger == "wandb" and runner.logger.writer is not None:
+        for video in Path(log_dir).rglob("*.mp4"):
+            runner.logger.writer.save_video(video, runner.current_learning_iteration)
 
     print(f"Training time: {round(time.time() - start_time, 2)} seconds")
 

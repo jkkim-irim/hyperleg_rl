@@ -101,20 +101,41 @@ def _compute_cot_components(
     return joule_L, joule_R, mech_L, mech_R
 
 
-def actuator_power_consumption(
+def _battery_input_power(
     env: "ManagerBasedRLEnv",
-    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    asset_cfg: SceneEntityCfg,
 ) -> torch.Tensor:
-    """Battery-input power [W] = ``joule_L + joule_R + mech_L + mech_R``.
-
-    Four-term approximation: asymmetric-scaled joule heating per leg plus
-    η-asymmetric mechanical power (positive = motoring cost, negative =
-    regen credit). Not divided by ``mgv`` — for the paper-reported CoT
-    metric, compute ``⟨P⟩/(m·g·⟨v⟩)`` separately at eval time. Sign comes
-    from ``RewTerm.weight`` — use a negative weight to penalize.
-    """
+    """Battery-input power [W] = ``joule_L + joule_R + mech_L + mech_R``."""
     joule_L, joule_R, mech_L, mech_R = _compute_cot_components(env, asset_cfg)
     return joule_L + joule_R + mech_L + mech_R
+
+
+def cost_of_transport_penalty(
+    env: "ManagerBasedRLEnv",
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    command_name: str = "base_velocity",
+    velocity_min: float = 0.1,
+) -> torch.Tensor:
+    """Instantaneous ``P / v`` [W·s/m] — proportional to transport CoT.
+
+    ``P`` is battery-input power (joule + signed mech). ``v`` is horizontal
+    transport speed [m/s]: body-frame ``|v · cmd_hat|`` when
+    ``||cmd_xy|| > 0.05`` m/s, else ``||v_xy||_b``. Fixed ``m·g`` (HyperLeg
+    ≈32 kg) is absorbed into ``RewTerm.weight``; divide by ``m·g`` at eval for
+    dimensionless CoT ``⟨P⟩/(m·g·⟨v⟩)``. Sign comes from ``RewTerm.weight``.
+    """
+    robot: "Articulation" = env.scene[asset_cfg.name]
+    power = _battery_input_power(env, asset_cfg)
+
+    cmd_xy = env.command_manager.get_command(command_name)[:, :2]
+    vel_xy = robot.data.root_lin_vel_b[:, :2]
+    cmd_speed = torch.linalg.norm(cmd_xy, dim=1)
+    cmd_hat = cmd_xy / cmd_speed.unsqueeze(1)
+    v_proj = (vel_xy * cmd_hat).sum(dim=1).abs()
+    v_xy = torch.linalg.norm(vel_xy, dim=1)
+    v = torch.where(cmd_speed > 0.05, v_proj, v_xy)
+
+    return power / v.clamp(min=velocity_min)
 
 
 def motor_thermal_penalty(
@@ -180,31 +201,66 @@ def motor_thermal_penalty(
     return total_penalty
 
 
-def heel_grf_l1(
+def lateral_base_lin_vel_y_hinge(
     env: "ManagerBasedRLEnv",
-    sensor_cfg: SceneEntityCfg = SceneEntityCfg("contact_forces", body_names=".*_heel"),
-    threshold: float = 0.0,
+    margin: float = 0.05,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
 ) -> torch.Tensor:
-    """Hinge L1 penalty on heel (``_heel``) GRF magnitude.
+    """Hinge L2 penalty on base lateral speed above ``margin`` [m/s]."""
+    robot: "Articulation" = env.scene[asset_cfg.name]
+    excess = robot.data.root_lin_vel_b[:, 1].abs() - margin
+    return torch.square(excess.clamp(min=0.0))
 
-    Sums ``max(0, ||net_force_w|| − threshold)`` across the bodies selected by
-    ``sensor_cfg`` (default: ``l_heel`` + ``r_heel``) per env. Heel loads below
-    ``threshold`` are free; above, the penalty grows linearly with the excess.
-    Encourages forefoot-/toe-led contact by punishing heel-strike spikes while
-    tolerating mild heel contact during stance roll.
 
-    Args:
-        threshold: per-heel force magnitude (N) below which no penalty applies.
-            Defaults to 0.0 (pure linear L1 from zero).
+def backward_base_lin_vel_x_hinge(
+    env: "ManagerBasedRLEnv",
+    margin: float = 0.03,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """Hinge L2 penalty on base backward speed above ``margin`` [m/s]."""
+    robot: "Articulation" = env.scene[asset_cfg.name]
+    excess = -robot.data.root_lin_vel_b[:, 0] - margin
+    return torch.square(excess.clamp(min=0.0))
 
-    Returns:
-        Per-env scalar in ``[0, ∞)`` (Newtons of excess force). Sign comes from
-        ``RewTerm.weight``.
+
+def pose_command_progress_reward(
+    env: "ManagerBasedRLEnv",
+    command_name: str,
+) -> torch.Tensor:
+    """SimTool-style dense reward: ``max(d* - d, 0)`` when XY goal distance improves.
+
+    ``d*`` is tracked per env on ``ArrivalResamplePose2dCommand._best_goal_dist`` and
+    resets on episode reset and goal resample. One-shot arrival bonus stays in
+    :func:`goal_arrived_event`.
     """
-    sensor = env.scene.sensors[sensor_cfg.name]
-    forces = sensor.data.net_forces_w
-    if sensor_cfg.body_ids is not None and sensor_cfg.body_ids != slice(None):
-        forces = forces[:, sensor_cfg.body_ids, :]
-    return (torch.linalg.norm(forces, dim=-1) - threshold).clamp(min=0.0).sum(dim=-1)
+    term = env.command_manager.get_term(command_name)
+    robot: "Articulation" = env.scene[term.cfg.asset_name]
+    d = torch.norm(term.pos_command_w[:, :2] - robot.data.root_pos_w[:, :2], dim=1)
+    d_star = term._best_goal_dist
+    first = torch.isinf(d_star)
+    dense = torch.where(first, torch.zeros_like(d), torch.clamp(d_star - d, min=0.0))
+    term._best_goal_dist = torch.where(first, d, torch.minimum(d_star, d))
+    return dense
 
+
+def goal_arrived_event(
+    env: "ManagerBasedRLEnv",
+    command_name: str,
+) -> torch.Tensor:
+    """One-shot 1.0 on the step the robot enters the goal ``arrival_std`` (0.0 otherwise).
+
+    Reward runs before ``command_manager.compute()`` in the env step. Edge-triggered env ids
+    are stored on the command term; ``ArrivalResamplePose2dCommand.compute()`` resamples for
+    continuing episodes, and ``ArrivalResamplePose2dCommand.reset()`` flushes the same ids when
+    the episode ends on the arrival step (before ``compute()``).
+    """
+    term = env.command_manager.get_term(command_name)
+    robot: "Articulation" = env.scene[term.cfg.asset_name]
+    dist = torch.norm(term.pos_command_w[:, :2] - robot.data.root_pos_w[:, :2], dim=1)
+    arrived = dist < term.cfg.arrival_std
+    newly_arrived = arrived & ~term._prev_arrived
+    event = newly_arrived.float()
+    term._prev_arrived = arrived.clone()
+    term._arrived_env_ids = newly_arrived.nonzero(as_tuple=False).flatten()
+    return event
 
