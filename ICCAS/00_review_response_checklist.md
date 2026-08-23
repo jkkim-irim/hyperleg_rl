@@ -1,249 +1,108 @@
-# ICCAS 2026 Final Submission — 리뷰어 코멘트 대응 체크리스트
+# ICCAS 2026 Final Submission — 리뷰 대응 할일 인덱스
 
 - **논문**: `ICCAS2026_HyperLeg_RL 20260524_0.tex` — *Comparative Study on Agility, Efficiency,
   and Impact Absorption of Bipedal Robots with Active Toes* (accepted)
-- **마감**: 2026-08-31 camera-ready / 작성일 2026-08-24 → **가용 7일**
+- **마감**: 2026-08-31 camera-ready / 작성일 2026-08-24
 - **페이지 제한**: 6페이지
-- **수령 코멘트**: Associate Editor, 리뷰어1. **리뷰어2 미수령**
-  (AE가 언급한 "notation, equation, and reference issues"의 구체 목록이 리뷰어2에 있을 것으로 추정)
+- **코멘트**: Associate Editor(7) + 리뷰어1(4) + 리뷰어2(11) = **원 코멘트 22건**
+  → 중복 제거 후 **작업 사안 11건**
 
 ---
 
-## 1. 조사로 확정한 사실
+## 1. 할일 인덱스
 
-### F1. Toe-ablation은 깨끗한 통제 실험 — 리뷰어1 #1을 완전히 답할 수 있다
+**위에서부터 순서대로 처리한다.** 
+#1~ #8은 본문 수정만으로 끝난다. 
+#9~ #11은 새 데이터가 필요하다. 
+단 #10·#11이 Table 3·4 수치를 바꾸면 #1·#3·#4가 인용하는 수치도 따라 바뀌므로, 그 세 항목은 마지막에 한 번 더 훑어야 한다.
 
-`pxr`로 두 USD를 직접 열어 비교:
-
-| 항목 | `HyperLeg.usd` | `HyperLeg_Wo_Toe.usd` |
-|---|---|---|
-| `L_TO`/`R_TO` | `PhysicsRevoluteJoint` (axis Z, −10~65°) | `PhysicsFixedJoint` |
-| 관절 프레임 `pos0/rot0/pos1/rot1` | — | **비트 단위 동일** (중립 0°에서 용접) |
-| body 수 / 총질량 | 18 / 32.0537 kg | 18 / 32.0537 kg **동일** |
-| toe 링크 `l_to`/`r_to` | 0.2241 kg | **0.2241 kg 유지** |
-| 충돌 프림 | 21개 (`l_to`, `l_tp`, `l_heel` 포함) | **21개 동일** |
-| CA 자코비안 | 7×7 | 6×6 (TO 행·열 제거) |
-
-→ 질량·관성·링크·**접촉 형상 모두 보존**, 구동 DOF만 제거. 리뷰어가 우려한 교란 요인
-(mass/inertia 변화, contact geometry 변화)이 실제로 없다.
-
-근거 코드: `source/hyperleg_rl/assets/hyperleg.py:35,52`,
-`source/hyperleg_rl/tasks/manager_based/locomotion/velocity/hyperleg/hyperleg_env_cfg.py:386`
-
-### F2. 체크포인트·로그 확정 소실 → 재학습 필수
-
-`logs/`는 `.gitignore` 대상. wandb 런 디렉토리의 `model_*.pt` **5831개가 전부 끊어진 심볼릭
-링크** (`/home/jkkim/IsaacLab/...` → 해당 경로 자체가 없음), 유효 파일 **0개**.
-`~/Downloads`의 `.pt` 3개는 action dim 18로 다른 프로젝트.
-
-### F3. wandb `config.yaml`은 실제 파일로 남아 논문 학습 설정을 정확히 복원 가능
-
-논문 Table III·IV를 만든 것으로 추정되는 런 (실행 시각·설정 일치):
-
-| 태스크 | 변형 | wandb 런 |
-|---|---|---|
-| walking | equipped | `run-20260530_091644-rb6dz0rr` |
-| walking | ablation | `run-20260530_110914-tmkzh77m` |
-| T-test | equipped | `run-20260613_144806-l8zheh8d` |
-| T-test | ablation | `run-20260613_162812-nje6a2ug` |
-
-**hyperleg 런 57개 전부 seed = 42** → 논문은 확정적으로 **단일 시드**.
-
-### F4. 학습 시간 실측 (체크포인트 심볼릭 링크 mtime으로 계산)
-
-| 태스크 | 설정 | 소요 |
-|---|---|---|
-| walking | 8192 env, 3000 iter | **77 min** (3런 평균 78.6) |
-| T-test | 16384 env, 3500 iter | **74 min** (2런) |
-
-가용 자원: **RTX 5090 × 2** (각 32 GB, GPU 1 유휴), 24 core, 125 GB RAM.
-
-### F5. Table II가 실제 학습 설정과 불일치 — 새로 발견한 결함
-
-| 항목 | 논문 Table II | 실제 walking | 실제 T-test |
-|---|---|---|---|
-| Parallel envs | 8192 | 8192 ✓ | **16384 ✗** |
-| Episode | 20 s | 20 s ✓ | **30 s ✗** |
-| Iterations | 3000 | 3000 ✓ | **3500 ✗** |
-| Learning rate | 1e-4 | 1e-4 ✓ | **1e-3 ✗** |
-| Linear velocity (xy) *w* | **+2.5** | **2.0 ✗** | — |
-| Angular velocity (z) *w* | **+0.5** | **1.0 ✗** | — |
-| Termination *w* | −200 | −200 ✓ | **−75 ✗** |
-| Thermal penalty *w* | −10.0 | −10 ✓ | **−5 ✗** |
-| Power/CoT 항 | Eq. (6) | `power_consumption` (−1e-4) | `cost_of_transport` (−1e-4) |
-
-논문의 Reward(position-command) 블록은 goal arrival·position progress 2행뿐이나 실제로는
-termination·thermal·CoT 3항이 더 있고 walking과 가중치가 다르다. 리포 코드
-`agents/rsl_rl_ppo_cfg.py:12`의 `max_iterations = 1000`도 논문 3000과 불일치(CLI 오버라이드였음).
-
-### F6. 선회 메커니즘 지표는 로깅되지 않음
-
-`scripts/rsl_rl/play_T_test.py:151` `_METRICS_COLS`는 `total_time_s`, `seg0~4_s`,
-`max/mean_vel_x`, `mean/max_path_dev_m`만 기록. **yaw rate·CoP·측면 가속도·선회 반경 전무.**
-
-### F7. GRF 정의는 코드에 명확히 있다
-
-`source/hyperleg_rl/viz/power_logger.py`의 `_FOOT_GRF_LEFT = ("l_heel",)` — **heel body만**
-집계. 즉 Abstract의 "heel-strike GRF"가 맞고 Table III의 "Avg GRF" 레이블이 틀렸다.
+<table>
+<colgroup>
+<col style="width:4%">
+<col style="width:82%">
+<col style="width:14%">
+</colgroup>
+<thead>
+<tr><th>#</th><th>사안</th><th>리뷰어</th></tr>
+</thead>
+<tbody>
+<tr><td><b>1</b></td>
+<td><b>agility 주장 완화.</b> 제목·결론이 "agility"/"turning agility"를 쓰지만 실험은 단일 T 코스이고 개선된 것은 path deviation뿐. toe-equipped는 max·avg 속도가 오히려 낮고 완주 시간은 거의 동일 → speed–accuracy trade-off. path deviation 감소가 선회 역학 개선일 수도, 더 보수적·느린 정책의 결과일 수도 있음. <code>"This confirms that active toes improve turning agility"</code> → <code>"The toe-equipped configuration showed reduced path deviation under the evaluated directional-change task."</code></td>
+<td>AE, R1, R2</td></tr>
+<tr><td><b>2</b></td>
+<td><b>high-fidelity / sim-to-real 표현 정밀화 + 잔여 불확실성 명시.</b> link inertial params, belt elasticity, structural compliance, backlash, contact stiffness/damping, actuator response에 대한 정량적 하드웨어 검증이 없음. 제안 문구: <code>"high-fidelity simulation"</code>→<code>"actuator- and transmission-aware simulation"</code>, <code>"reduces the sim-to-real gap"</code>→<code>"is intended to support future sim-to-real transfer"</code>, <code>"a rigorous foundation for closing the sim-to-real gap"</code>→<code>"a simulation-based evaluation prior to hardware deployment"</code>. 결론에서 시뮬레이션 관찰과 실기 검증을 명확히 구분</td>
+<td>AE, R1, R2</td></tr>
+<tr><td><b>3</b></td>
+<td><b>CoT 정의·재현 가능성.</b> Intro의 "70 kg, 125 W, 1.33 m/s → CoT 0.316"이 재현 불가 — <b>계산 확인: 0.137</b>. 125 W가 metabolic인지 mechanical인지 밝히고 0.316 도출 과정 설명. Table 1은 motoring/regen 효율을 따로 주는데 CoT 식은 signed mechanical power만 써서 regeneration이 battery-side power에 들어가는 방식이 불명. Table 3 "Mechanical loss"의 의미도 명확히</td>
+<td>AE, R2</td></tr>
+<tr><td><b>4</b></td>
+<td><b>GRF 지표 정의 통일.</b> Abstract "heel-strike GRF" vs Table 3 "Avg GRF" — 같은 지표가 아님. 명시할 것: vertical인지 3D 합력인지 / peak인지 평균인지 / 평균 구간이 heel strike인지 stance 전체인지 / 한 발인지 양발인지 / heel strike 검출 방법 / 힘 필터링 여부. 정의 전까지 5.0%를 impact absorption 개선으로 해석 불가</td>
+<td>AE, R2</td></tr>
+<tr><td><b>5</b></td>
+<td><b>수식·기호·참고문헌 정리.</b> ① Table 2가 <b>없는 Eq. (6)을 참조</b> — 논문 수식은 5개뿐이고 CoT는 <b>Eq. (5)</b> (확인됨). ② Table 2 goal-arrival 보상식에 현재 위치 항 누락 의심. ③ <code>v_m</code>, <code>d*</code>, <code>σ_arr</code>, <code>[x]+</code>, <code>τ_cont,i</code> 의미·값 제시 + 모터별 <code>h_th</code> 값 보고. ④ Table 1의 joint <code>ω_max</code>가 motor <code>ω_0</code>와 <b>완전 동일</b>(300.0/327.2/366.0) — Hip 25:1이면 관절은 12 rad/s여야 함 (확인됨). ⑤ <code>C_p</code> 단위·도출 근거. ⑥ <b>ref [24] 미인용</b> — 인용하거나 삭제</td>
+<td>AE, R2</td></tr>
+<tr><td><b>6</b></td>
+<td><b>toe-ablation 설정 명확화.</b> action이 14→12로 줄었으나 toe joint·actuator·link·mass/inertia·contact geometry 중 무엇이 제거/고정/변경됐는지 불명. active toe 구동과 접촉 형상 변화가 <b>둘 다</b> 개선에 기여했을 수 있어 중요</td>
+<td>AE, R1</td></tr>
+<tr><td><b>7</b></td>
+<td><b>기계 설계 절의 active toe 서술 보강.</b> hip/knee/ankle 액추에이터에 지면을 많이 쓰고 핵심인 active toe는 짧고 대부분 [20]으로 미룸. 필요 정보: toe length, mass, RoM, joint-axis location, contact-surface geometry, torque capacity, toe 모터가 ankle·knee 토크에 기여하는 정도, 유효 감속비의 자세 의존성, [20]에서 계승/변경한 것. 일반 액추에이터 서술을 압축해 지면 확보</td>
+<td>R2</td></tr>
+<tr><td><b>8</b></td>
+<td><b>문체·용어·약어.</b> <code>"rigorously isolate"</code>, <code>"ensuring an unbiased setup"</code>, <code>"confirms"</code>, <code>"significantly improves"</code>가 근거보다 강함 → <code>"compare"</code>, <code>"using the same training procedure"</code>, <code>"suggests"</code>, <code>"showed a reduction under the evaluated conditions"</code>. "biped robot"/"bipedal robot" 표기 통일. RL·CoT·GRF 등 약어를 첫 등장 시 정의, 한 번만 쓰는 용어는 약어화 금지</td>
+<td>R2</td></tr>
+<tr><td><b>9</b></td>
+<td><b>그림 보강.</b> Fig. 6 캡션에 음영 영역이 std / standard error / range 중 무엇인지 명시(#10과 연결). Fig. 7에 축 레이블·단위, 기준 경로와 로봇 궤적 구분 표시를 넣어 본문 없이도 이해되게. <b>Fig. 7은 재플롯이 필요해 궤적 데이터에 의존</b></td>
+<td>R2</td></tr>
+<tr><td><b>10</b></td>
+<td><b>학습 시드 수 + 10 trial 변동성(std/range) 보고.</b> Table 3·4가 평균만 제시. 10회가 단일 정책 반복인지 독립 시드인지 명시. Fig. 6 음영 영역의 의미 정의. 정책 1개만 학습했다면 한계 인정. 변동성 분석 없이 "significant" 사용 금지. <b>재학습·재롤아웃 필요</b></td>
+<td>AE, R1, R2</td></tr>
+<tr><td><b>11</b></td>
+<td><b>선회 메커니즘 정량 지표 1~2개 추가.</b> toe는 sagittal 운동인데 왜 yaw 선회·path tracking이 개선되는지 미분석. 후보: yaw-rate tracking error, CoP trajectory, toe-contact duration, stance-foot slip distance, lateral GRF, torso angular-velocity variation, turning radius, lateral acceleration. 분석 없으면 결론을 "path deviation 감소" 관찰에 한정. <b>로거 확장 + 재롤아웃 필요</b></td>
+<td>AE, R1, R2</td></tr>
+</tbody>
+</table>
 
 ---
 
-## 2. 시드를 여러 개 돌려야 하는가
+## 2. 지적 강도
 
-**리뷰어는 다중 시드를 요구하지 않았다.** R1-4는 "std/CI를 보고하고 그 10 trial이 단일 정책의
-반복 롤아웃인지 독립 학습 시드인지 **밝혀라**", AE는 "변동성을 학습 시드 수와 **함께** 보고하라".
-요구의 본질은 **공개(disclosure)**다. "시드 1개, 단일 정책 10회 롤아웃"이라고 정직하게 적고
-std를 붙이면 문자 그대로 충족된다.
+| 지적자 수 | 항목 |
+|---|---|
+| **3명 전원** | **#1** agility 주장, **#2** sim-to-real 표현, **#10** 변동성·시드, **#11** 선회 메커니즘 |
+| 2명 | #3 CoT, #4 GRF, #5 수식·기호·참조, #6 toe-ablation 설정 |
+| 리뷰어2 단독 | #7 active toe 서술, #8 문체·용어, #9 그림 |
 
-**그럼에도 3시드를 권장한다:**
-
-- F2로 재학습이 **어차피 필수**다. 시드 1개든 3개든 파이프라인은 똑같이 돌려야 한다.
-- F4 실측으로 3시드 총비용은 **12런 × ~75분 ÷ GPU 2장 ≈ 7.6시간**. 7일 중 하루의 1/3.
-- 논문의 가장 약한 지점(n=1)을 거의 공짜로 메꾼다. AE가 시드 수를 물은 것 자체가 이 지점을
-  보고 있다는 신호다.
-
-**리스크**: 새 정책의 수치는 논문의 −17.5% CoT 등과 달라진다. 3시드 mean±std로 효과가
-축소되거나 agility 방향이 뒤집힐 수도 있다.
-**완화**: 시드를 사후 선별하지 않고 **전부 보고**한다. 효과가 사라지면 그대로 쓴다 —
-AE가 이미 agility 톤 조정을 요구했으므로 방향 자체는 어긋나지 않는다.
+3명이 전원 지적한 **#1·#2·#10·#11** 이 이번 리비전의 핵심이다. 네 항목 모두
+"주장이 근거를 초과한다"는 같은 뿌리에서 나왔다 — 리뷰어2 Summary의
+*"several claims currently extend beyond what the experiments directly demonstrate"* 가 총평.
 
 ---
 
-## 3. 대응 체크리스트
+## 3. 리뷰어별 원 코멘트 대조 (누락 확인용)
 
-레인: **A** 텍스트만 / **B** 기존 데이터 재분석 / **C** 코드+재학습+롤아웃 / **D** 기간 내 불가
+| 원 코멘트 | 할일 # |
+|---|---|
+| AE-1 agility 주장 완화 | 1 |
+| AE-2 선회 메커니즘 정량 | 11 |
+| AE-3 sim-to-real 표현 정밀화 | 2 |
+| AE-4 toe-ablation 설정 | 6 |
+| AE-5 변동성 + 시드 수 | 10 |
+| AE-6 GRF·CoT 정의 | 3, 4 |
+| AE-7 notation·equation·reference | 5 |
+| R1-1 toe-ablation 설정 | 6 |
+| R1-2 agility 정의 + 선회 지표 | 1, 11 |
+| R1-3 실기 실험 없음 / 잔여 불확실성 논의 | 2 |
+| R1-4 std·CI, 단일 정책 vs 독립 시드 | 10 |
+| R2-3.1 agility 주장 범위 초과 | 1 |
+| R2-3.2 선회 메커니즘 미분석 | 11 |
+| R2-3.3 CoT 재현 불가 | 3 |
+| R2-3.4 GRF 정의 불일치 | 4 |
+| R2-3.5 high-fidelity 주장 | 2 |
+| R2-3.6 active toe 서술 부족 | 7 |
+| R2-3.7 실험 변동성 | 10 |
+| R2-4.1 문체·용어·약어 | 8 |
+| R2-4.2 수식·기호 | 5 |
+| R2-4.3 그림 캡션·축 | 9 |
+| R2-4.4 ref [24] 미인용 | 5 |
 
-### C 레인 — 임계 경로, 가장 먼저 착수
-
-- [ ] **W0. 재학습 12런** (W3·W4의 전제)
-  - seed 42/43/44 × {walking, T-test} × {equipped, ablation}
-  - `max_iterations`가 코드에 1000으로 박혀 있으므로 CLI로 walking 3000 / T-test 3500 지정
-  - envs는 F5의 실제값 (walking 8192, T-test 16384). GPU 2장 → 6웨이브 ≈ 7.6 h
-  - **verify**: 12개 런에 최종 체크포인트 존재 + **`logs/`를 wandb 심볼릭 링크에 의존하지 않고
-    별도 백업** (F2 재발 방지)
-
-- [ ] **W3. 선회 메커니즘 정량 지표 추가** — AE2, R1-2
-  - AE는 "yaw-rate error or CoP trajectory", R1은 "turning radius, lateral acceleration,
-    or yaw rate" → 교집합이 yaw rate. 두 지표를 넣는다:
-    1. **yaw-rate tracking error** [rad/s] — 스칼라, Table IV에 1행 추가
-    2. **CoP 전후 이동 범위** [m] — sagittal toe가 왜 turning에 영향을 주는지 설명하는 메커니즘.
-       toe가 push-off를 연장해 stance 중 CoP를 더 전방까지 밀어냄 → 선회 시 지지면 활용 증가
-  - `play_T_test.py:151` `_METRICS_COLS` + `_TrialMetrics.on_step` 확장. CoP는 기존
-    `source/hyperleg_rl/sensors/force_vector_contact_sensor.py`의 접촉력 벡터를 재사용
-    (신규 센서 불필요)
-  - **verify**: `ttest_trials.csv`에 신규 컬럼이 trial별로 기록되고, toe-equipped의 yaw-rate
-    error가 ablation보다 작다는 방향성 확인
-
-- [ ] **W4. 시드 수 + 변동성 보고** — AE5, R1-4
-  - 3시드 × 10 trial = config당 30 trial → Table III·IV를 **mean ± std**로 전면 갱신
-  - 본문에 "3 independent training seeds × 10 rollouts each" 명시
-  - **verify**: 표의 모든 수치에 ±std, Abstract·본문·Conclusion 4곳 수치 일치 (grep 전수)
-
-### A 레인 — 학습 도는 동안 병행
-
-- [ ] **W1. Toe-ablation 설정 명시** — AE4, R1-1. F1을 그대로 서술. Section III-B 첫 문단
-  - 초안: *"In the toe-ablation variant, the toe revolute joint is replaced by a fixed joint
-    at the neutral (0°) configuration in the identical joint frame; the toe link, its mass
-    (0.224 kg per foot), inertia, and all collision geometry are retained, so total mass
-    (32.05 kg) and foot–ground contact geometry are unchanged. Only the actuated DOF is
-    removed, reducing the CA Jacobian from 7×7 to 6×6."*
-  - **verify**: 질량·접촉 형상 불변이 명시적으로 쓰였는지
-
-- [ ] **W2. Agility 주장 톤 조정** — AE1, R1-2
-  - "improved turning agility" → "improved path-tracking accuracy under a speed–accuracy
-    trade-off". Abstract / Section IV-B 마지막 문장 / Conclusion 3곳. 순증 ~0줄
-  - **verify**: agility를 근거 없이 단정하는 문장이 남아있지 않은지 grep
-
-- [ ] **W5. "high-fidelity"/"sim-to-real" 표현 정밀화 + 잔여 불확실성 명시** — AE3, R1-3
-  - "high-fidelity simulation" → "actuator- and transmission-aware simulation".
-    Abstract / Section III 제목·본문 / Conclusion
-  - Conclusion limitation 문단에 belt compliance, backlash, contact-model uncertainty를
-    남은 오차원으로 추가. 순증 ~3줄
-  - **verify**: 하드웨어 검증 없이 "sim-to-real gap을 줄였다"고 단정하는 문장이 없는지
-
-- [ ] **W6. GRF·CoT 정의 일관화·재현 가능화** — AE6
-  - Table III 행 레이블 "Avg GRF [N]" → "Mean heel-strike GRF [N]" (F7 근거). Abstract·
-    Conclusion과 용어 통일
-  - **Eq. (6)에 드라이버 효율 명시.** 현재 식은 (P_Joule + P_mech)/mgv 뿐이고 η는 Table I에만
-    있어 재현 불가. 코드의 실제 형태 (`mech = p<0 ? p·η_regen : p/η_out`, η_out=0.9 /
-    η_regen=0.8)를 식에 반영
-  - **verify**: 식만 보고 롤아웃 CSV에서 CoT를 재계산할 수 있는지 실제 대조
-
-- [ ] **W7. Table II를 실제 학습 설정과 일치시키기** — AE6 "reproducible". F5 전항목 수정
-  - walking / T-test 2열로 분리. 보상 가중치 (lin vel 2.0, ang vel 1.0), T-test의
-    envs 16384 · episode 30 s · 3500 iter · lr 1e-3, position-command 블록의 누락된
-    termination(−75) · thermal(−5) · CoT(−1e-4) 추가
-  - **verify**: Table II의 모든 셀이 재학습 런 `config.yaml`과 일치 (자동 대조 스크립트 권장)
-
-- [ ] **W8. 사전 결함** (코멘트와 무관, 무조건 수정)
-  - 그림 파일명 오타 → **컴파일 실패**: `.tex:503`의 `fig05a_gait_compaer_snapshot` →
-    `fig05a_gait_compare_snapshot`
-  - 미인용 참고문헌 **[24]** (Flayols, humanoid state estimators): 본문 인용처 추가 또는
-    삭제 후 [25]~[28] 재번호
-  - **Toe RoM 부호 확인**: Table I은 −65~10°, USD는 −10~65°. 부호 규약 확정
-    (AE의 "notation issues"에 해당 가능)
-  - **verify**: `pdflatex` 3회 무경고, 참고문헌 1~28 전부 본문 등장
-
-### D 레인 — 기간 내 불가, 명시 흡수
-
-- [ ] **W-D1. 실기 하드웨어 검증** — R1-3. 로봇 미제작. Conclusion의 기존 limitation 문단에
-  "no hardware validation"을 유지·강화하고 W5의 잔여 불확실성 서술과 묶는다.
-  숨기지 않고 명시하는 것이 유일한 선택.
-
-### 대기
-
-- [ ] **W9. 리뷰어2 코멘트 수신 후 추가 트리아지.** AE가 언급한 notation·equation·reference
-  이슈의 구체 목록이 여기 있을 것. 도착 시 이 표에 행 추가.
-
----
-
-## 4. 코멘트 → 작업 매핑
-
-| 출처 | 코멘트 | 작업 | 레인 |
-|---|---|---|---|
-| AE | agility 주장이 근거를 초과 — path-tracking + speed-accuracy trade-off로 표현 | W2 | A |
-| AE | yaw-rate error 또는 CoP 등 메커니즘 정량 1~2개 보고 | W3 | C |
-| AE | high-fidelity / sim-to-real 을 actuator·transmission-aware로 정밀화 | W5 | A |
-| AE | toe-ablation 설정 명확화 | W1 | A |
-| AE | 10 trial 변동성 + 학습 시드 수 보고 | W4 | C |
-| AE | GRF·CoT 정의 일관성·재현성 | W6 | A |
-| AE | notation·equation·reference 이슈 수정 | W8, W9 | A |
-| R1-1 | toe-ablation: 관절/액추에이터/링크/질량/관성/접촉형상 중 무엇이 제거·고정되었는가 | W1 | A |
-| R1-2 | agility 정의 명확화 + turning radius / lateral accel / yaw rate 추가 | W2, W3 | A+C |
-| R1-3 | 실기 실험 없음 — 최소한 belt compliance·backlash·contact 불확실성 논의 | W5, W-D1 | A+D |
-| R1-4 | 10 trial의 std/CI, 단일 정책 반복인가 독립 시드인가 | W4 | C |
-
----
-
-## 5. 실행 순서
-
-1. **W8 그림 오타 수정 → 컴파일 → 현재 페이지 수 실측**
-   (6페이지 여유 확정. 다른 모든 분량 판단의 전제)
-2. **W0 재학습 12런 착수** (GPU 2장, 6웨이브 ≈ 7.6 h). 동시에 `logs/` 별도 백업 경로 설정
-3. 학습 중 **W3 로거 확장** 구현 (T-test 롤아웃 전까지 완료 필수)
-4. 학습 중 **A 레인 W1·W2·W5·W6·W7·W8** 전부 처리
-5. 학습 완료 → **롤아웃**: walking `play_goto_x.py --log_csv`,
-   T-test `play_T_test.py --log_csv` (3시드 × 2 config × 10 trial)
-6. **W4 표 갱신** → 수치를 Abstract / Table / 본문 / Conclusion **4곳 동시** 반영
-7. 페이지 초과 시 축소 순서: Section II 액추에이터 서술 → Fig. 2·3 subfigure 수
-8. 최종 검증 (§6)
-
-**분량 순증 추정**: W1 4줄 + W3 (표 2행 + 4줄) + W5 3줄 + W6 3줄 + W7 (Table II 확장 ~6줄)
-≈ 0.4~0.5 컬럼. 1번에서 실측 후 확정.
-
-**D-day 판정**: 8/28까지 재학습·롤아웃이 끝나지 않으면 W3·W4를 축소(시드 1개 + 공개 서술)하고
-A 레인만으로 제출한다.
-
----
-
-## 6. 최종 검증 (제출 직전, 순서대로)
-
-1. `pdflatex` 3회 — 미해결 참조·미싱 그림·overfull 경고 0
-2. 페이지 수 ≤ 6
-3. Abstract / Table / 본문 / Conclusion 4곳 수치 일치 — 변경 수치 grep 전수 확인
-4. Table II의 모든 셀 ↔ 재학습 런 `config.yaml` 대조
-5. Eq. (6)만 보고 롤아웃 CSV에서 CoT 재계산이 되는지 실제 대조 (AE의 "reproducible" 요구)
-6. 그림·표·식 번호 참조가 본문 서술과 일치
-7. 참고문헌 1~28 전부 인용
-8. 이 체크리스트 전 항목 = 완료 또는 D 명시
-9. accept 메일의 제출물 목록 (copyright form·저자 등록 등) 확인 — **아직 미확인**
+원 코멘트 22건 전부가 할일 11건에 매핑됨 — 누락 없음.

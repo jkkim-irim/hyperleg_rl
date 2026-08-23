@@ -1,0 +1,28 @@
+Comments to author (Associate Editor)
+=====================================
+
+The proposed work extends the authors' active-toe HyperLeg
+mechanism to a 14-DOF biped and compares toe-equipped and
+toe-ablation configurations under a common
+reinforcement-learning procedure with actuator- and
+transmission-aware modeling. The reviewers agree that the
+coupled-transmission treatment in motor space, the
+energy-based formulation, and the clear multi-metric
+comparison are meaningful strengths. The main concern is
+that the agility claim exceeds what the evaluation
+supports, since the toe-equipped model shows lower path
+deviation but also lower speed, so the result is better
+described as improved path-tracking under a possible
+speed-accuracy trade-off; the authors are recommended to
+temper this wording and to report one or two mechanistic
+quantities, such as yaw-rate error or center-of-pressure
+trajectory, that explain how a sagittal toe motion affects
+turning. The high-fidelity and sim-to-real claims should
+also be framed more precisely as actuator- and
+transmission-aware simulation, since no hardware validation
+is provided, and the toe-ablation setup should be specified
+clearly. In addition, variability across the ten trials
+should be reported with the number of training seeds, the
+GRF and CoT definitions should be made consistent and
+reproducible, and the noted notation, equation, and
+reference issues corrected.

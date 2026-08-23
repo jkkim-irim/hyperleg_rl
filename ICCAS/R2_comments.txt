@@ -1,0 +1,279 @@
+Summary
+
+This paper extends the authors’ previously developed
+HyperLeg active-toe mechanism to a 14-DOF biped robot and
+compares toe-equipped and toe-ablation configurations under
+a common reinforcement-learning procedure. The simulation
+incorporates cooperative-actuation mapping, motor
+torque–speed limits, joint friction, and motor-side energy
+consumption. Straight-line walking and a T-shaped
+directional-change task are evaluated. The authors report
+that the toe-equipped configuration reduces CoT and GRF by
+17.5% and 5.0%, respectively, and reduces average and
+maximum path deviation by 25.0% and 34.0%. The main
+contribution is the quantitative evaluation of an
+active-toe biped using an actuator- and transmission-aware
+learning framework, although several claims currently
+extend beyond what the experiments directly demonstrate.
+
+Strengths
+
+2.1 Clear Quantitative Comparison
+
+The paper presents a clear comparative study by applying
+the previously developed HyperLeg mechanism to a full biped
+platform and evaluating toe-equipped and toe-ablation
+configurations using multiple quantitative metrics. Rather
+than reporting only successful locomotion, the manuscript
+compares power consumption, CoT, GRF, task-completion time,
+speed, and path deviation. This multi-metric evaluation
+provides a useful basis for examining both the benefits and
+limitations of the active-toe configuration.
+
+2.2 Cooperative-Actuation-Aware Modeling
+
+The manuscript does not simplify the coupled knee–ankle–toe
+mechanism as ideal direct-joint actuation. Instead, joint
+velocities and torques are mapped between joint and motor
+spaces through the cooperative-actuation Jacobian, and the
+motor commands are constrained by four-quadrant
+torque–speed envelopes. This is a technically meaningful
+treatment of the proposed transmission structure.
+
+2.3 Direct Consideration of Energy Consumption
+
+The use of Joule heating and signed mechanical power is
+better aligned with the energy-efficiency objective than a
+conventional squared-joint-torque penalty. This formulation
+may also help reveal how the active-toe configuration
+redistributes energy demand across the hip, knee, and ankle
+joints.
+
+2.4 Presentation of Absolute and Relative Performance
+
+Tables 3 and 4 report both absolute values and relative
+changes, making the effects of the toe-equipped
+configuration easy to interpret. The joint-level power
+breakdown in Fig. 6 also provides more insight than the
+whole-body CoT value alone.
+
+Major Revisions
+
+3.1 The Scope of the Agility Claim Exceeds the Evaluated
+Metrics
+
+The title and conclusion use the broad terms “agility” and
+“turning agility.” However, the experiment is limited to a
+single T-shaped course, and the main improved metrics are
+average and maximum path deviation.
+
+According to Table 4, the toe-equipped model has lower peak
+and average speeds than the toe-ablation model. The
+completion times are nearly identical, whereas the path
+deviations are smaller for the toe-equipped configuration.
+Therefore, the results directly support the following
+conclusion:
+
+Under the evaluated T-shaped course and training
+conditions, the toe-equipped configuration exhibited lower
+path deviation together with slightly lower movement speed.
+
+The current evidence is more consistent with improved
+path-tracking accuracy under a possible speed–accuracy
+trade-off than with a general improvement in agility or
+faster turning. The smaller path deviation may result from
+improved turning dynamics, but it may also reflect a more
+conservative and slower policy.
+
+The statement “This confirms that active toes improve
+turning agility” should therefore be revised to a more
+evidence-based statement, such as “The toe-equipped
+configuration showed reduced path deviation under the
+evaluated directional-change task.”
+
+3.2 The Physical Mechanism Behind the Directional-Change
+Result Is Not Analyzed
+
+The toe joint primarily produces sagittal-plane motion. It
+is therefore not immediately evident why this actuation
+should improve yaw-direction turning or path tracking. The
+manuscript reports reduced path deviation but does not
+identify the mechanical mechanism responsible for this
+result.
+
+A comprehensive analysis of all possible factors is
+unnecessary, but one or two directly relevant quantities
+should be reported. Suitable examples include toe-contact
+duration, center-of-pressure trajectory, stance-foot slip
+distance, lateral GRF, yaw-rate tracking error, or torso
+angular-velocity variation.
+
+Without such analysis, the conclusion should remain limited
+to the observed reduction in path deviation rather than
+attributing the result directly to improved turning
+capability.
+
+3.3 The Reported CoT Value Cannot Be Reproduced from the
+Stated Quantities
+
+The Introduction states that a 70 kg adult consuming 125 W
+at 1.33 m/s has a CoT of 0.316. However, using Eq. (5), the
+corresponding CoT is approximately 0.138.
+
+The manuscript should clarify whether 125 W represents
+metabolic power, mechanical power, or another quantity, and
+explain how the value of 0.316 was obtained.
+
+Table 1 also provides separate motoring and regeneration
+efficiencies, whereas Eq. (5) uses signed mechanical power
+without clearly describing how regeneration is incorporated
+into battery-side power. The treatment of regenerative
+power and the meaning of “Mechanical loss” in Table 3
+should also be clarified.
+
+3.4 The GRF Metric Is Inconsistently Defined
+
+The abstract reports a 5.0% reduction in “heel-strike GRF,”
+whereas Table 3 labels the corresponding quantity as “Avg
+GRF.” These terms do not describe the same metric.
+
+The manuscript should specify whether the value represents
+vertical GRF or the three-dimensional resultant force,
+whether it is a peak or averaged value, whether the
+averaging interval covers heel strike or the entire stance
+phase, whether the value represents one foot or both feet,
+how heel strike is detected, and whether force filtering is
+applied.
+
+Until the metric is clearly defined, the reported 5.0%
+reduction cannot be interpreted unambiguously as improved
+impact absorption. The abstract, main text, and Table 3
+should use the same terminology.
+
+3.5 The High-Fidelity and Sim-to-Real Claims Should Be More
+Precisely Framed
+
+The simulation improvements described in Section III
+primarily concern coupled-transmission mapping, motor
+torque–speed limits, joint friction, and motor-side power
+estimation.
+
+The manuscript does not provide quantitative hardware
+validation of link inertial parameters, belt elasticity,
+structural compliance, backlash, foot–ground contact
+stiffness, contact damping, or actuator response.
+Therefore, the demonstrated contribution is more accurately
+characterized as actuator- and transmission-aware
+simulation rather than a validated high-fidelity model of
+the complete robot dynamics.
+
+The authors should either provide evidence supporting the
+high-fidelity claim or use more precise wording. For
+example, “high-fidelity simulation” could be replaced by
+“actuator- and transmission-aware simulation,” “reduces the
+sim-to-real gap” by “is intended to support future
+sim-to-real transfer,” and “a rigorous foundation for
+closing the sim-to-real gap” by “a simulation-based
+evaluation prior to hardware deployment.”
+
+The conclusion should clearly distinguish simulation
+observations from performance experimentally validated on
+the physical robot.
+
+3.6 The Mechanical-Design Section Should Place Greater
+Emphasis on the Active Toe
+
+The mechanical-design section devotes considerable space to
+conventional hip, knee, and ankle actuator structures,
+whereas the active-toe mechanism, which is the central
+subject of the comparative study, is described relatively
+briefly and is largely deferred to the previous work [20].
+
+The manuscript need not repeat all details from [20], but
+it should provide sufficient toe-specific information to
+interpret the present experiments. Relevant information
+includes toe length, mass, range of motion, joint-axis
+location, contact-surface geometry, torque capacity,
+contribution of the toe motor to ankle and knee torque,
+posture dependence of the effective transmission ratio, and
+the elements inherited from or modified relative to [20].
+
+Generic actuator descriptions could be condensed to provide
+more space for explaining how toe geometry and transmission
+are expected to affect energy consumption, impact response,
+and path-tracking performance.
+
+3.7 Experimental Variability Should Be Reported
+
+The manuscript states that ten trials were conducted for
+the walking and directional-change experiments, but Tables
+3 and 4 report only mean values. It is also unclear whether
+the ten trials represent repeated evaluations of one
+trained policy or independently trained policies with
+different random seeds.
+
+The authors should report the number of independent
+training seeds, explain how the ten trials were generated,
+provide the standard deviation or range, and define the
+meaning of the shaded regions in Fig. 6.
+
+If only one policy was trained for each configuration, this
+limitation should be acknowledged. Terms such as
+“significant” should not be used unless supported by an
+appropriate analysis of variability.
+
+Minor Revisions
+
+4.1 Academic Writing and Terminology
+
+Expressions such as “rigorously isolate,” “ensuring an
+unbiased setup,” “confirms,” and “significantly improves”
+are stronger than the current evidence supports. More
+neutral expressions such as “compare,” “using the same
+training procedure,” “suggests,” or “showed a reduction
+under the evaluated conditions” should be used.
+
+The manuscript should use “biped robot” and “bipedal robot”
+consistently throughout.
+
+Frequently used abbreviations, including RL, CoT, and GRF,
+should be defined at their first occurrence. There is no
+need to introduce abbreviations for terms used only once.
+
+4.2 Equations and Notation
+
+The power-consumption reward in Table 2 refers to Eq. (6),
+although the manuscript contains only Eqs. (1)–(5). The
+correct equation number should be provided.
+
+The current-position term appears to be missing from the
+goal-arrival reward equation in Table 2. The equation
+should be checked and corrected.
+
+The meanings and values of v_m, d*, σ_arr, [x]+, and
+τ_cont,i should be provided. Although the motor safety
+threshold is described as heuristically tuned, its
+motor-specific values should also be reported for
+reproducibility.
+
+In Table 1, the joint ω_max values are identical to
+the motor ω_0 values. The authors should verify
+whether this row represents motor speed or post-reduction
+joint speed and correct the label or values accordingly.
+
+The unit and derivation of C_p should be provided.
+
+4.3 Formatting and Visual Materials
+
+The caption of Fig. 6 should state whether the shaded
+regions represent standard deviation, standard error, or a
+value range. Fig. 7 should include clear axis labels,
+units, and identification of the reference path and robot
+trajectories so that the figure can be understood
+independently from the main text.
+
+4.4 Reference
+
+Reference [24] does not appear to be cited in the main
+text. It should either be cited in an appropriate location
+or removed from the reference list. 

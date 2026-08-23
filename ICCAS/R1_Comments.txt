@@ -1,0 +1,47 @@
+This paper presents a technically interesting 14-DOF biped
+robot with active toes and a high-fidelity
+reinforcement-learning simulation framework. A major
+strength is the realistic modeling of the coupled
+transmission in motor space, including torque-speed limits,
+joint friction, Joule heating, and mechanical power. The
+comparison between the active-toe and toe-ablation models
+is generally well designed, and the reported reductions in
+CoT and path deviation indicate that active toes can
+improve locomotion efficiency and directional control.
+
+The paper is clearly written and presents a meaningful
+technological contribution. I have several minor comments.
+
+1. Please clarify the exact toe-ablation setup. Although
+the action dimension is reduced from 14 to 12, it is
+unclear whether the toe joint, actuator, link,
+mass/inertia, and contact geometry are removed, locked, or
+otherwise modified. This is important because active toe
+actuation and altered foot-ground contact geometry may both
+contribute to the reported improvements.
+
+2. In the T-test, the toe-ablation model achieves higher
+maximum and average speeds, while both models have nearly
+identical completion times. The active-toe model clearly
+provides better path accuracy, but the result also
+indicates a speed-accuracy trade-off. The definition of
+agility should therefore be clarified, and additional
+metrics such as turning radius, lateral acceleration, or
+yaw rate would strengthen the claim.
+
+3. The simulation model is carefully constructed, but no
+physical robot experiments are included. Even limited
+hardware validation would substantially increase the
+paper’s impact. Otherwise, the remaining effects of belt
+compliance, backlash, and contact-model uncertainty should
+be discussed more explicitly.
+
+4. Please report standard deviations or confidence
+intervals over the ten trials and clarify whether they
+correspond to repeated rollouts of one policy or
+independent training seeds.
+
+Overall, this is a solid conference paper with a meaningful
+hardware concept and a careful simulation methodology. The
+comments above are primarily requests for clarification and
+additional supporting analysis. 
