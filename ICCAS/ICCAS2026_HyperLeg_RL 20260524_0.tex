@@ -47,8 +47,8 @@ Cheonan, 31253, Korea \\
     environment that reflects actual actuators with coupled transmissions and accurate power consumption.
     To ensure a fair comparison between configurations with and without active toes, we designed a minimal RL reward
     function and applied an identical training procedure to both. The simulation results indicate that, at
-    1.33~m/s walking, the toe-equipped robot reduced CoT by 17.5\% and heel-strike GRF by 5.0\% compared with the
-    toe-ablation configuration. On the agility test, the toe-equipped robot was 4.4\% slower on average
+    1.33~m/s walking, the toe-equipped model reduced CoT by 17.5\% and heel-strike GRF by 5.0\% compared with the
+    toe-ablation configuration. On the agility test, the toe-equipped model was 4.4\% slower on average
     but reduced mean path deviation by 25.0\%, completing the course in the same time to within 0.1\%.
 }
 
@@ -643,9 +643,10 @@ depart from the reference path more often.
 This paper presented a 14-DOF bipedal robot with active toes and cooperative actuation (CA), and compared
 toe-equipped and toe-ablation configurations in a high-fidelity RL simulation. Both variants were trained with
 identical objective rewards and actuator models reflecting coupled transmissions and measured power consumption.
-At 1.33\,m/s walking, the toe-equipped robot reduced total power by 16.9\%, CoT by 17.5\%, and heel-strike GRF
-by 5.0\%. On the Robot T-Test, average and maximum path deviation decreased by 25.0\% and 34.0\%, respectively,
-with a marginal reduction in completion time, confirming improved turning agility.
+At 1.33\,m/s walking, the toe-equipped model reduced total power by 16.9\%, CoT by 17.5\%, and
+heel-strike GRF by 5.0\%. On the Robot T-Test its average speed was 4.4\% lower, yet average and maximum
+path deviation were 25.0\% and 34.0\% smaller at essentially unchanged completion time. Whether this
+stems from the toe-equipped model having learned a more conservative policy requires further experiments.
 
 Although we aimed to build a realistic simulation environment, the results have not yet been validated on a
 physical robot. In addition, we did not test whether toe-equipped configurations yield similar benefits on
