@@ -27,7 +27,7 @@
 </thead>
 <tbody>
 <tr><td><b>1</b></td>
-<td><b>agility 주장 완화.</b> 제목·결론이 "agility"/"turning agility"를 쓰지만 실험은 단일 T 코스이고 개선된 것은 path deviation뿐. toe-equipped는 max·avg 속도가 오히려 낮고 완주 시간은 거의 동일 → speed–accuracy trade-off. path deviation 감소가 선회 역학 개선일 수도, 더 보수적·느린 정책의 결과일 수도 있음. <code>"This confirms that active toes improve turning agility"</code> → <code>"The toe-equipped configuration showed reduced path deviation under the evaluated directional-change task."</code></td>
+<td>✅ <b>agility 주장 완화.</b> 제목·결론이 "agility"/"turning agility"를 쓰지만 실험은 단일 T 코스이고 개선된 것은 path deviation뿐. toe-equipped는 max·avg 속도가 오히려 낮고 완주 시간은 거의 동일 → speed–accuracy trade-off. path deviation 감소가 선회 역학 개선일 수도, 더 보수적·느린 정책의 결과일 수도 있음. <code>"This confirms that active toes improve turning agility"</code> → <code>"The toe-equipped configuration showed reduced path deviation under the evaluated directional-change task."</code></td>
 <td>AE, R1, R2</td></tr>
 <tr><td><b>2</b></td>
 <td><b>high-fidelity / sim-to-real 표현 정밀화 + 잔여 불확실성 명시.</b> link inertial params, belt elasticity, structural compliance, backlash, contact stiffness/damping, actuator response에 대한 정량적 하드웨어 검증이 없음. 제안 문구: <code>"high-fidelity simulation"</code>→<code>"actuator- and transmission-aware simulation"</code>, <code>"reduces the sim-to-real gap"</code>→<code>"is intended to support future sim-to-real transfer"</code>, <code>"a rigorous foundation for closing the sim-to-real gap"</code>→<code>"a simulation-based evaluation prior to hardware deployment"</code>. 결론에서 시뮬레이션 관찰과 실기 검증을 명확히 구분</td>
