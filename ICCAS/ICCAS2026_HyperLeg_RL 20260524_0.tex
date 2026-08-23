@@ -392,7 +392,7 @@ Fig.~\ref{fig:ca_envelopes} shows representative operating points of the ankle m
 which the robot performs the agility test. Because the CA structure breaks the one-to-one mapping between motor
 and joint torques, the joint velocity from the simulator and the target joint torque from the policy network are
 first projected into motor space via Eqs.~(1)--(3); the motor torques are then clipped against the 4-quadrant
-torque--speed envelope using the Isaac Lab DCMotorActuator [26]; finally, the clipped motor torques are
+torque--speed envelope using the Isaac Lab DCMotorActuator [25]; finally, the clipped motor torques are
 projected back to yield the CA-projected joint torque $\tau_{j\_clip}$. Since HyperLeg transmits power below
 the knee through timing belts and linkages, joint-space friction is non-negligible; we therefore subtract a
 measured Coulomb-plus-viscous friction term (Table~I) from $\tau_{j\_clip}$ to obtain the final commanded
@@ -427,7 +427,7 @@ in Table~\ref{tab:rl_setup}.
 
 However, during training we observed that the policy occasionally converged to unrealistic postures that
 sustain excessive torque on specific joints. To suppress such behavior, we adopt a CBF-style soft constraint
-in the same form as the recent thermal-aware reward proposed for quadruped locomotion [27]. As shown in
+in the same form as the recent thermal-aware reward proposed for quadruped locomotion [26]. As shown in
 Table~\ref{tab:rl_setup}, $h_{i}$ denotes the safety margin of the $i$-th motor, defined as
 $h_{i} = h^{\text{th}}_{i} - \mathrm{EMA}(\tau_{i}/\tau_{\text{cont},i})^{2}$, and the EMA time constant
 is set to $\tau_{\text{EMA}} = 3$\,s. The per-motor thresholds $h^{\text{th}}_{i}$ are tuned heuristically
@@ -449,7 +449,7 @@ converging to inefficient postures.
     \rowcolor{gray!15}
     \multicolumn{3}{|l|}{\textbf{Algorithm \& network}} \\
     \hline
-    Optimizer / framework  & \multicolumn{2}{l|}{PPO [25] / Isaac Lab [26]} \\
+    Optimizer / framework  & \multicolumn{2}{l|}{PPO [24] / Isaac Lab [25]} \\
     Network                & \multicolumn{2}{l|}{MLP [512, 256, 128], ELU} \\
     Architecture           & \multicolumn{2}{l|}{Symmetric actor--critic} \\
     \hline
@@ -578,7 +578,7 @@ impact absorption.
 \subsection{Agility Test}
 
 To assess how active toes affect directional-change performance, we propose a Robot T-Test inspired by the athletic
-Agility T-Test [28]. Unlike the human test, the robot may rotate its torso freely and is trained with
+Agility T-Test [27]. Unlike the human test, the robot may rotate its torso freely and is trained with
 position-command rewards rather than walking velocity-command rewards. Waypoints are issued sequentially as in
 Fig.~\ref{fig:ttest}(a) along A$\rightarrow$B$\rightarrow$C$\rightarrow$D$\rightarrow$B$\rightarrow$A.
 
@@ -720,15 +720,12 @@ V. Radhakrishnan, ``Locomotion: dealing with friction,'' \textit{Proc. of the Na
 \bibitem{ref23}
 Y. Sim and J. Ramos, ``Tello Leg: The Study of Design Principles and Metrics for Dynamic Humanoid Robots,'' \textit{IEEE Robotics and Automation Letters}, vol. 7, no. 4, pp. 9318--9325, 2022.
 \bibitem{ref24}
-T. Flayols, A. Del Prete, P. Wensing, A. Mifsud, M. Benallegue, and O. Stasse, ``Experimental evaluation of simple estimators for humanoid robots,'' in \textit{Proc. of IEEE-RAS 17th International
-Conference on Humanoid Robotics (Humanoids)}, Birmingham, UK, pp. 889--895, 2017.
-\bibitem{ref25}
 J. Schulman, F. Wolski, P. Dhariwal, A. Radford, and O. Klimov, ``Proximal Policy Optimization Algorithms,'' \textit{arXiv preprint arXiv:1707.06347}, 2017.
-\bibitem{ref26}
+\bibitem{ref25}
 M. Mittal et al., ``Isaac Lab: A GPU-Accelerated Simulation Framework for Multi-Modal Robot Learning,'' \textit{arXiv preprint arXiv:2511.04831}, 2025.
-\bibitem{ref27}
+\bibitem{ref26}
 L. Qian, Y. Wan, S. Wang, and X. Luo, ``Learning Thermal-Aware Locomotion Policies for an Electrically-Actuated Quadruped Robot,'' \textit{arXiv preprint arXiv:2603.01631}, 2026.
-\bibitem{ref28}
+\bibitem{ref27}
 K. Pauole, K. Madole, J. Garhammer, M. Lacourse, and R. Rozenek, ``Reliability and validity of the T-test as a measure of agility, leg power, and leg speed in college-aged men and women,'' \textit{Journal
 of Strength and Conditioning Research}, vol. 14, no. 4, pp. 443--450, Nov. 2000.
 
