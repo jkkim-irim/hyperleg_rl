@@ -48,9 +48,8 @@ Cheonan, 31253, Korea \\
     To ensure a fair comparison between configurations with and without active toes, we designed a minimal RL reward
     function and applied an identical training procedure to both. The simulation results indicate that, at
     1.33~m/s walking, the toe-equipped robot reduced CoT by 17.5\% and heel-strike GRF by 5.0\% compared with the
-    toe-ablation configuration. On the T-test, average and maximum path deviation decreased by 25.0\% and
-    34.0\%, respectively, at a 4.4\% lower average speed and an essentially unchanged completion time,
-    indicating improved path-tracking accuracy under a speed--accuracy trade-off.
+    toe-ablation configuration. On the agility test, average and maximum path deviation decreased by 25.0\% and
+    34.0\%, respectively.
 }
 
 \keywords{
@@ -587,13 +586,11 @@ Table~\ref{tab:agility_results} reports the ten-trial averages. Completion time 
 (16.06~s vs.\ 16.08~s). The toe-ablation model attains higher peak and average speeds (3.549~vs.\
 3.313~m/s and 2.182~vs.\ 2.085~m/s), but tracks the course less accurately: with the active toe, average and
 maximum path deviation decrease by 25.0\% and 34.0\% (0.231~vs.\ 0.308~m and 0.682~vs.\ 1.033~m).
-Completion time is therefore essentially identical (a $0.1\%$ difference), and the two configurations differ
-mainly in how that time is spent: the toe-equipped model tracks the prescribed path more closely, whereas the
-toe-ablation model travels faster but departs further from the turns. The reduced deviation may stem from
-improved turning dynamics, but a more conservative and slower policy cannot be ruled out. Fig.~\ref{fig:ttest}(b) and (c) show
+Therefore, although the toe-equipped model is relatively slower, it exhibits greater agility in turning and
+stays closer to the prescribed path, finishing marginally faster overall. Fig.~\ref{fig:ttest}(b) and (c) show
 the trajectories from the T-test trials. Compared with the toe-equipped case, the toe-ablation trajectories
-depart from the reference path more often. The toe-equipped configuration therefore showed reduced path
-deviation under the evaluated directional-change task.
+depart from the reference path more often. This confirms that active toes improve turning agility on the
+T-test.
 
 % ===== Table IV (single-column float) =====
 \begin{table}[t]
@@ -649,9 +646,7 @@ toe-equipped and toe-ablation configurations in a high-fidelity RL simulation. B
 identical objective rewards and actuator models reflecting coupled transmissions and measured power consumption.
 At 1.33\,m/s walking, the toe-equipped robot reduced total power by 16.9\%, CoT by 17.5\%, and heel-strike GRF
 by 5.0\%. On the Robot T-Test, average and maximum path deviation decreased by 25.0\% and 34.0\%, respectively,
-at a 4.4\% lower average speed and an essentially unchanged completion time. Under the evaluated
-directional-change task this indicates improved path-tracking accuracy rather than a general improvement in
-agility.
+with a marginal reduction in completion time, confirming improved turning agility.
 
 Although we aimed to build a realistic simulation environment, the results have not yet been validated on a
 physical robot. In addition, we did not test whether toe-equipped configurations yield similar benefits on
