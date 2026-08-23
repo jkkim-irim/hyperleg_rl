@@ -281,7 +281,7 @@ to ankle pitch. This intentional coupling is termed Cooperative Actuation (CA) [
 
 
 \section{LEARNING-BASED CONTROL}
-\subsection{Actuator- and Transmission-Aware Simulation Setup}
+\subsection{Simulation Setup}
 Although learning-based control has recently overcome the limitations of traditional model-based control 
 in locomotion research, inaccurate robot dynamics and actuator models in simulators cause significant 
 sim-to-real gaps. In particular, common simulators model robots as direct-joint-actuation systems, failing to 
@@ -326,11 +326,11 @@ reduces the sim-to-real gap but forfeits hardware advantages, limiting potential
 
 To address these challenges, this paper focused on:
 \begin{itemize}
-    \item Realistic actuator modeling that accurately reflects the relationship between joints and actuators.
-    \item Integration of accurate CoT estimation into training.
+    \item Actuator modeling that reflects the coupled relationship between joints and actuators.
+    \item Integration of a motor-side CoT estimate into training.
 \end{itemize}
-By incorporating these improvements, we aim to reduce the sim-to-real gap while retaining the benefits of
-complex hardware architectures, ultimately enabling robust and energy-efficient real-world bipedal locomotion.
+By incorporating these improvements, we aim to retain the benefits of complex hardware architectures
+while supporting future sim-to-real transfer.
 
 % ===== Table I (single-column float) =====
 \begin{table}[t]
