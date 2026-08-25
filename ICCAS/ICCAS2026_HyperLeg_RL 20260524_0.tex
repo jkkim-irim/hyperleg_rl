@@ -647,12 +647,13 @@ environment. Both variants were trained with identical objective rewards and act
 coupled transmissions and measured power consumption.
 At 1.33\,m/s walking, the toe-equipped model reduced total power by 16.9\%, CoT by 17.5\%, and
 heel-strike GRF by 5.0\%. On the Robot T-Test its average speed was 4.4\% lower, yet average and maximum
-path deviation were 25.0\% and 34.0\% smaller at essentially unchanged completion time. Whether this
-stems from the toe-equipped model having learned a more conservative policy requires further experiments.
+path deviation were 25.0\% and 34.0\% smaller at essentially unchanged completion time.
 
-Although we aimed to build a realistic simulation environment, the results have not yet been validated on a
-physical robot. In addition, we did not test whether toe-equipped configurations yield similar benefits on
-other bipedal platforms; generalization beyond the proposed system remains an open question.
+Although we aimed to build a realistic simulation environment, the link inertial parameters, backlash,
+belt and frame stiffness, and the foot--ground contact model have not been validated against hardware,
+and verifying sim-to-real transfer remains future work. In addition, we did not test whether
+toe-equipped configurations yield similar benefits on other bipedal platforms; generalization beyond
+the proposed system remains an open question.
 
 As future work, we plan to examine generalization across bipedal systems, refine the hardware design based on
 these simulation insights, and build and test the robot in real environments for walking and agility. Broader
