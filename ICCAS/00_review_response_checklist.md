@@ -33,7 +33,7 @@
 <td>✅ <b>high-fidelity / sim-to-real 표현 정밀화 + 잔여 불확실성 명시.</b> link inertial params, belt elasticity, structural compliance, backlash, contact stiffness/damping, actuator response에 대한 정량적 하드웨어 검증이 없음. 제안 문구: <code>"high-fidelity simulation"</code>→<code>"actuator- and transmission-aware simulation"</code>, <code>"reduces the sim-to-real gap"</code>→<code>"is intended to support future sim-to-real transfer"</code>, <code>"a rigorous foundation for closing the sim-to-real gap"</code>→<code>"a simulation-based evaluation prior to hardware deployment"</code>. 결론에서 시뮬레이션 관찰과 실기 검증을 명확히 구분</td>
 <td>AE, R1, R2</td></tr>
 <tr><td><b>3</b></td>
-<td><b>CoT 정의·재현 가능성.</b> Intro의 "70 kg, 125 W, 1.33 m/s → CoT 0.316"이 재현 불가 — <b>계산 확인: 0.137</b>. 125 W가 metabolic인지 mechanical인지 밝히고 0.316 도출 과정 설명. Table 1은 motoring/regen 효율을 따로 주는데 CoT 식은 signed mechanical power만 써서 regeneration이 battery-side power에 들어가는 방식이 불명. Table 3 "Mechanical loss"의 의미도 명확히</td>
+<td>✅ <b>CoT 정의·재현 가능성.</b> Intro의 "70 kg, 125 W, 1.33 m/s → CoT 0.316"이 재현 불가 — <b>계산 확인: 0.137</b>. 125 W가 metabolic인지 mechanical인지 밝히고 0.316 도출 과정 설명. Table 1은 motoring/regen 효율을 따로 주는데 CoT 식은 signed mechanical power만 써서 regeneration이 battery-side power에 들어가는 방식이 불명. Table 3 "Mechanical loss"의 의미도 명확히</td>
 <td>AE, R2</td></tr>
 <tr><td><b>4</b></td>
 <td><b>GRF 지표 정의 통일.</b> Abstract "heel-strike GRF" vs Table 3 "Avg GRF" — 같은 지표가 아님. 명시할 것: vertical인지 3D 합력인지 / peak인지 평균인지 / 평균 구간이 heel strike인지 stance 전체인지 / 한 발인지 양발인지 / heel strike 검출 방법 / 힘 필터링 여부. 정의 전까지 5.0%를 impact absorption 개선으로 해석 불가</td>
