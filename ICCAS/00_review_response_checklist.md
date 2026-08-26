@@ -36,7 +36,7 @@
 <td>✅ <b>CoT 정의·재현 가능성.</b> Intro의 "70 kg, 125 W, 1.33 m/s → CoT 0.316"이 재현 불가 — <b>계산 확인: 0.137</b>. 125 W가 metabolic인지 mechanical인지 밝히고 0.316 도출 과정 설명. Table 1은 motoring/regen 효율을 따로 주는데 CoT 식은 signed mechanical power만 써서 regeneration이 battery-side power에 들어가는 방식이 불명. Table 3 "Mechanical loss"의 의미도 명확히</td>
 <td>AE, R2</td></tr>
 <tr><td><b>4</b></td>
-<td><b>GRF 지표 정의 통일.</b> Abstract "heel-strike GRF" vs Table 3 "Avg GRF" — 같은 지표가 아님. 명시할 것: vertical인지 3D 합력인지 / peak인지 평균인지 / 평균 구간이 heel strike인지 stance 전체인지 / 한 발인지 양발인지 / heel strike 검출 방법 / 힘 필터링 여부. 정의 전까지 5.0%를 impact absorption 개선으로 해석 불가</td>
+<td>✅ <b>GRF 지표 정의 통일.</b> Abstract "heel-strike GRF" vs Table 3 "Avg GRF" — 같은 지표가 아님. 명시할 것: vertical인지 3D 합력인지 / peak인지 평균인지 / 평균 구간이 heel strike인지 stance 전체인지 / 한 발인지 양발인지 / heel strike 검출 방법 / 힘 필터링 여부. 정의 전까지 5.0%를 impact absorption 개선으로 해석 불가</td>
 <td>AE, R2</td></tr>
 <tr><td><b>5</b></td>
 <td><b>수식·기호·참고문헌 정리.</b> ① Table 2가 <b>없는 Eq. (6)을 참조</b> — 논문 수식은 5개뿐이고 CoT는 <b>Eq. (5)</b> (확인됨). ② Table 2 goal-arrival 보상식에 현재 위치 항 누락 의심. ③ <code>v_m</code>, <code>d*</code>, <code>σ_arr</code>, <code>[x]+</code>, <code>τ_cont,i</code> 의미·값 제시 + 모터별 <code>h_th</code> 값 보고. ④ Table 1의 joint <code>ω_max</code>가 motor <code>ω_0</code>와 <b>완전 동일</b>(300.0/327.2/366.0) — Hip 25:1이면 관절은 12 rad/s여야 함 (확인됨). ⑤ <code>C_p</code> 단위·도출 근거. ⑥ ✅ <b>ref [24] 미인용</b> — 삭제하고 [25]~[28]을 [24]~[27]로 재번호 (완료)</td>

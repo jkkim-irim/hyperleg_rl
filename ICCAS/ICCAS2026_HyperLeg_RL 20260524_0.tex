@@ -516,7 +516,9 @@ model (bottom) shows greater knee flexion and leg lift than the toe-equipped mod
 greater energy demand without the toe.
 
 Table~\ref{tab:quant_results}\footnote{$\Delta$ is the relative change of toe-equipped compared with
-toe-ablation. Mechanical loss is the cycle-averaged $P_{mech}$ of Eq.~(5).} summarizes the whole-body metrics: relative to toe-ablation, toe-equipped reduces total power by 16.9\% (313.0~W to 260.2~W), CoT by 17.5\% (0.776 to 0.640), and heel-strike
+toe-ablation. Mechanical loss is the cycle-averaged $P_{mech}$ of Eq.~(5). Heel-strike GRF is the
+per-strike peak of the heel-body contact-force magnitude, averaged over all strikes of both feet;
+strikes are detected as threshold crossings of the raw, unfiltered heel force.} summarizes the whole-body metrics: relative to toe-ablation, toe-equipped reduces total power by 16.9\% (313.0~W to 260.2~W), CoT by 17.5\% (0.776 to 0.640), and heel-strike
 GRF by 5.0\% (1021.1~N to 970.0~N). Fig.~\ref{fig:cycle_average}
 breaks down the gait-cycle-averaged right-leg power by joint: removing the toe increases hip, knee, and ankle
 power from 103.7~W to 126.0~W ($+22\%$), 61.8~W to 68.9~W ($+11\%$), and 47.5~W to 61.1~W ($+29\%$),
@@ -543,7 +545,7 @@ impact absorption.
     CoT                  & 0.640 & 0.776 & $-$17.5 \\
     \rowcolor{gray!15}
     Time to goal [s]     & 15.96 & 16.13 & $-$1.1 \\
-    Avg GRF [N]          & 970.0 & 1021.1 & $-$5.0 \\
+    Heel-strike GRF [N]  & 970.0 & 1021.1 & $-$5.0 \\
     \bottomrule
     \end{tabular}
 \end{table}
