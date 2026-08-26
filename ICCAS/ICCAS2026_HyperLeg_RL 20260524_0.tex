@@ -408,14 +408,21 @@ penalizing the 2-norm of joint torques is inadequate. We instead estimate and mi
 decomposing the motor-side energy consumption during locomotion into Joule heating and the (signed) mechanical
 power:
 \begin{equation}
-    CoT = \frac{P_{Joule} + P_{mech}}{mgv}
+    CoT = \frac{P_{Joule} + P_{mech}}{mgv},
+    \qquad
+    P_{mech} = \sum_{i}
+    \begin{cases}
+        p_{i}/\eta_{out}, & p_{i} \geq 0\\
+        \eta_{regen}\, p_{i}, & p_{i} < 0
+    \end{cases}
     \label{eq:cot}
 \end{equation}
-where:
+where $p_{i} = \tau_{i}\omega_{i}$ is the mechanical power of motor $i$, and:
 \begin{itemize}
     \item $m$, $g$, $v$: robot mass, gravity, and velocity.
-    \item $P_{\text{Joule}}$: resistive heating $C_{p}\tau^{2}$.
-    \item $P_{\text{mech}}$: signed mechanical power $\tau\omega$.
+    \item $P_{\text{Joule}} = \sum_{i} C_{p,i}\,\tau_{i}^{2}$: resistive heating.
+    \item $\eta_{out} = 0.9$, $\eta_{regen} = 0.8$: driver efficiencies (Table~I), so
+          regenerated power is only partially credited back to the battery.
 \end{itemize}
 
 
@@ -735,10 +742,5 @@ of Strength and Conditioning Research}, vol. 14, no. 4, pp. 443--450, Nov. 2000.
 \end{thebibliography}
 %
 %%--------------------------------------------------------------------%%
-
-
-
-
-
 
 \end{document}
