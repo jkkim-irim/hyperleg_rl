@@ -402,6 +402,7 @@ torque:
     \tau_{cmd} = \tau_{j\_clip} - \left( f_{c} \cdot \tanh\!\left(\dot{q}/v_{m}\right) + f_{v}\,\dot{q} \right)
     \label{eq:friction}
 \end{equation}
+where $v_{m} = 0.1$~rad/s is the velocity scale that smooths the sign transition of the Coulomb term.
 
 To rigorously isolate the contribution of the active toe to energy efficiency, the common practice of
 penalizing the 2-norm of joint torques is inadequate. We instead estimate and minimize the CoT directly,
