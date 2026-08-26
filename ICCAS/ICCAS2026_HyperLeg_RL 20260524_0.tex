@@ -408,21 +408,17 @@ penalizing the 2-norm of joint torques is inadequate. We instead estimate and mi
 decomposing the motor-side energy consumption during locomotion into Joule heating and the (signed) mechanical
 power:
 \begin{equation}
-    CoT = \frac{P_{Joule} + P_{mech}}{mgv},
-    \qquad
-    P_{mech} = \sum_{i}
-    \begin{cases}
-        p_{i}/\eta_{out}, & p_{i} \geq 0\\
-        \eta_{regen}\, p_{i}, & p_{i} < 0
-    \end{cases}
+    CoT = \frac{P_{Joule} + P_{mech}}{mgv}
     \label{eq:cot}
 \end{equation}
-where $p_{i} = \tau_{i}\omega_{i}$ is the mechanical power of motor $i$, and:
+where:
 \begin{itemize}
     \item $m$, $g$, $v$: robot mass, gravity, and velocity.
     \item $P_{\text{Joule}} = \sum_{i} C_{p,i}\,\tau_{i}^{2}$: resistive heating.
-    \item $\eta_{out} = 0.9$, $\eta_{regen} = 0.8$: driver efficiencies (Table~I), so
-          regenerated power is only partially credited back to the battery.
+    \item $P_{\text{mech}}$: battery-side mechanical power; each motor's
+          $p_{i} = \tau_{i}\omega_{i}$ is charged as $p_{i}/\eta_{out}$ when motoring
+          ($p_{i} \geq 0$) and credited as $\eta_{regen}\,p_{i}$ when regenerating,
+          with $\eta_{out} = 0.9$ and $\eta_{regen} = 0.8$ (Table~I).
 \end{itemize}
 
 
