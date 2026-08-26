@@ -39,7 +39,7 @@
 <td>✅ <b>GRF 지표 정의 통일.</b> Abstract "heel-strike GRF" vs Table 3 "Avg GRF" — 같은 지표가 아님. 명시할 것: vertical인지 3D 합력인지 / peak인지 평균인지 / 평균 구간이 heel strike인지 stance 전체인지 / 한 발인지 양발인지 / heel strike 검출 방법 / 힘 필터링 여부. 정의 전까지 5.0%를 impact absorption 개선으로 해석 불가</td>
 <td>AE, R2</td></tr>
 <tr><td><b>5</b></td>
-<td><b>수식·기호·참고문헌 정리.</b> ① Table 2가 <b>없는 Eq. (6)을 참조</b> — 논문 수식은 5개뿐이고 CoT는 <b>Eq. (5)</b> (확인됨). ② Table 2 goal-arrival 보상식에 현재 위치 항 누락 의심. ③ <code>v_m</code>, <code>d*</code>, <code>σ_arr</code>, <code>[x]+</code>, <code>τ_cont,i</code> 의미·값 제시 + 모터별 <code>h_th</code> 값 보고. ④ Table 1의 joint <code>ω_max</code>가 motor <code>ω_0</code>와 <b>완전 동일</b>(300.0/327.2/366.0) — Hip 25:1이면 관절은 12 rad/s여야 함 (확인됨). ⑤ <code>C_p</code> 단위·도출 근거. ⑥ ✅ <b>ref [24] 미인용</b> — 삭제하고 [25]~[28]을 [24]~[27]로 재번호 (완료)</td>
+<td><b>수식·기호·참고문헌 정리.</b> ① Table 2가 <b>없는 Eq. (6)을 참조</b> — 논문 수식은 5개뿐이고 CoT는 <b>Eq. (5)</b> (확인됨). ② Table 2 goal-arrival 보상식에 현재 위치 항 누락 의심. ③ ✅ <code>v_m</code>=0.1 rad/s, <code>σ_arr</code>=0.1 m, <code>d*</code>=best-so-far 거리, <code>[x]+</code>=max(x,0), <code>τ_cont</code>=Table I τ_max, <code>h_th</code>=전 모터 0.5 — 모두 명기 완료. ④ Table 1의 joint <code>ω_max</code>가 motor <code>ω_0</code>와 <b>완전 동일</b>(300.0/327.2/366.0) — Hip 25:1이면 관절은 12 rad/s여야 함 (확인됨). ⑤ <code>C_p</code> 단위·도출 근거. ⑥ ✅ <b>ref [24] 미인용</b> — 삭제하고 [25]~[28]을 [24]~[27]로 재번호 (완료)</td>
 <td>AE, R2</td></tr>
 <tr><td><b>6</b></td>
 <td><b>toe-ablation 설정 명확화.</b> action이 14→12로 줄었으나 toe joint·actuator·link·mass/inertia·contact geometry 중 무엇이 제거/고정/변경됐는지 불명. active toe 구동과 접촉 형상 변화가 <b>둘 다</b> 개선에 기여했을 수 있어 중요</td>
