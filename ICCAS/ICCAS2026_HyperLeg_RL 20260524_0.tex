@@ -433,9 +433,9 @@ However, during training we observed that the policy occasionally converged to u
 sustain excessive torque on specific joints. To suppress such behavior, we adopt a CBF-style soft constraint
 in the same form as the recent thermal-aware reward proposed for quadruped locomotion [26]. As shown in
 Table~\ref{tab:rl_setup}, $h_{i}$ denotes the safety margin of the $i$-th motor, defined as
-$h_{i} = h^{\text{th}}_{i} - \mathrm{EMA}(\tau_{i}/\tau_{\text{cont},i})^{2}$, and the EMA time constant
-is set to $\tau_{\text{EMA}} = 3$\,s. The per-motor thresholds $h^{\text{th}}_{i}$ are tuned heuristically
-rather than derived from detailed thermal characterization, with the goal of preventing the policy from
+$h_{i} = h^{\text{th}}_{i} - \mathrm{EMA}(\tau_{i}/\tau_{\text{cont},i})^{2}$, where $\tau_{\text{cont},i}$
+is the motor continuous torque ($\tau_{\max}$ in Table~I) and $\tau_{\text{EMA}} = 3$\,s. The thresholds
+are set heuristically to $h^{\text{th}}_{i} = 0.5$ for all motors, to prevent the policy from
 converging to inefficient postures.
 
 
