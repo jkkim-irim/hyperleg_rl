@@ -415,10 +415,9 @@ where:
 \begin{itemize}
     \item $m$, $g$, $v$: robot mass, gravity, and velocity.
     \item $P_{\text{Joule}} = \sum_{i} C_{p,i}\,\tau_{i}^{2}$: resistive heating.
-    \item $P_{\text{mech}}$: battery-side mechanical power; each motor's
-          $p_{i} = \tau_{i}\omega_{i}$ is charged as $p_{i}/\eta_{out}$ when motoring
-          ($p_{i} \geq 0$) and credited as $\eta_{regen}\,p_{i}$ when regenerating,
-          with $\eta_{out} = 0.9$ and $\eta_{regen} = 0.8$ (Table~I).
+    \item $P_{\text{mech}} = \sum_{i} \max(p_{i},0)/\eta_{out} + \eta_{regen}\min(p_{i},0)$:
+          battery-side mechanical power, $p_{i} = \tau_{i}\omega_{i}$,
+          $\eta_{out} = 0.9$, $\eta_{regen} = 0.8$ (Table~I).
 \end{itemize}
 
 
@@ -517,8 +516,7 @@ model (bottom) shows greater knee flexion and leg lift than the toe-equipped mod
 greater energy demand without the toe.
 
 Table~\ref{tab:quant_results}\footnote{$\Delta$ is the relative change of toe-equipped compared with
-toe-ablation. Mechanical loss is the cycle-averaged battery-side mechanical term of Eq.~(5), i.e.,
-the net sum of every motor's charged and regenerated power.} summarizes the whole-body metrics: relative to toe-ablation, toe-equipped reduces total power by 16.9\% (313.0~W to 260.2~W), CoT by 17.5\% (0.776 to 0.640), and heel-strike
+toe-ablation. Mechanical loss is the cycle-averaged $P_{mech}$ of Eq.~(5).} summarizes the whole-body metrics: relative to toe-ablation, toe-equipped reduces total power by 16.9\% (313.0~W to 260.2~W), CoT by 17.5\% (0.776 to 0.640), and heel-strike
 GRF by 5.0\% (1021.1~N to 970.0~N). Fig.~\ref{fig:cycle_average}
 breaks down the gait-cycle-averaged right-leg power by joint: removing the toe increases hip, knee, and ankle
 power from 103.7~W to 126.0~W ($+22\%$), 61.8~W to 68.9~W ($+11\%$), and 47.5~W to 61.1~W ($+29\%$),
