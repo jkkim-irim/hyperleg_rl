@@ -51,10 +51,10 @@
 <td>✅ <b>문체·용어·약어.</b> <code>"rigorously isolate"</code>, <code>"ensuring an unbiased setup"</code>, <code>"confirms"</code>, <code>"significantly improves"</code>가 근거보다 강함 → <code>"compare"</code>, <code>"using the same training procedure"</code>, <code>"suggests"</code>, <code>"showed a reduction under the evaluated conditions"</code>. "biped robot"/"bipedal robot" 표기 통일. RL·CoT·GRF 등 약어를 첫 등장 시 정의, 한 번만 쓰는 용어는 약어화 금지</td>
 <td>R2</td></tr>
 <tr><td><b>9</b></td>
-<td><b>그림 보강.</b> Fig. 6 캡션에 음영 영역이 std / standard error / range 중 무엇인지 명시(#10과 연결). Fig. 7에 축 레이블·단위, 기준 경로와 로봇 궤적 구분 표시를 넣어 본문 없이도 이해되게. <b>Fig. 7은 재플롯이 필요해 궤적 데이터에 의존</b></td>
+<td>✅ <b>그림 보강.</b> Fig. 6 캡션에 음영 영역이 std / standard error / range 중 무엇인지 명시(#10과 연결). Fig. 7에 축 레이블·단위, 기준 경로와 로봇 궤적 구분 표시를 넣어 본문 없이도 이해되게. <b>Fig. 7은 재플롯이 필요해 궤적 데이터에 의존</b></td>
 <td>R2</td></tr>
 <tr><td><b>10</b></td>
-<td><b>학습 시드 수 + 10 trial 변동성(std/range) 보고.</b> Table 3·4가 평균만 제시. 10회가 단일 정책 반복인지 독립 시드인지 명시. Fig. 6 음영 영역의 의미 정의. 정책 1개만 학습했다면 한계 인정. 변동성 분석 없이 "significant" 사용 금지. <b>재학습·재롤아웃 필요</b></td>
+<td>✅(부분) <b>학습 시드 수 + 10 trial 변동성(std/range) 보고.</b> Table 3·4가 평균만 제시. 10회가 단일 정책 반복인지 독립 시드인지 명시. Fig. 6 음영 영역의 의미 정의. 정책 1개만 학습했다면 한계 인정. 변동성 분석 없이 "significant" 사용 금지. <b>재학습·재롤아웃 필요</b></td>
 <td>AE, R1, R2</td></tr>
 <tr><td><b>11</b></td>
 <td><b>선회 메커니즘 정량 지표 1~2개 추가.</b> toe는 sagittal 운동인데 왜 yaw 선회·path tracking이 개선되는지 미분석. 후보: yaw-rate tracking error, CoP trajectory, toe-contact duration, stance-foot slip distance, lateral GRF, torso angular-velocity variation, turning radius, lateral acceleration. 분석 없으면 결론을 "path deviation 감소" 관찰에 한정. <b>로거 확장 + 재롤아웃 필요</b></td>
