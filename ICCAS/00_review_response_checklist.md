@@ -42,7 +42,7 @@
 <td>✅ <b>수식·기호·참고문헌 정리.</b> ① ✅ Table 2가 <b>없는 Eq. (6)을 참조</b> — 논문 수식은 5개뿐이고 CoT는 <b>Eq. (5)</b> (확인됨). ② ✅ goal-arrival 식에 위치 항 존재(R2 오독). 단 one-shot 지급을 각주에 명시. ③ ✅ <code>v_m</code>=0.1 rad/s, <code>σ_arr</code>=0.1 m, <code>d*</code>=best-so-far 거리, <code>[x]+</code>=max(x,0), <code>τ_cont</code>=Table I τ_max, <code>h_th</code>=전 모터 0.5 — 모두 명기 완료. ④ ✅ Table 1의 joint <code>ω_max</code>가 motor <code>ω_0</code>와 <b>완전 동일</b>(300.0/327.2/366.0) — Hip 25:1이면 관절은 12 rad/s여야 함 (확인됨). ⑤ ✅ <code>C_p</code> 단위 [W/(Nm)²] 표기 (도출식은 저자 판단으로 생략). ⑥ ✅ <b>ref [24] 미인용</b> — 삭제하고 [25]~[28]을 [24]~[27]로 재번호 (완료)</td>
 <td>AE, R2</td></tr>
 <tr><td><b>6</b></td>
-<td><b>toe-ablation 설정 명확화.</b> action이 14→12로 줄었으나 toe joint·actuator·link·mass/inertia·contact geometry 중 무엇이 제거/고정/변경됐는지 불명. active toe 구동과 접촉 형상 변화가 <b>둘 다</b> 개선에 기여했을 수 있어 중요</td>
+<td>✅ <b>toe-ablation 설정 명확화.</b> action이 14→12로 줄었으나 toe joint·actuator·link·mass/inertia·contact geometry 중 무엇이 제거/고정/변경됐는지 불명. active toe 구동과 접촉 형상 변화가 <b>둘 다</b> 개선에 기여했을 수 있어 중요</td>
 <td>AE, R1</td></tr>
 <tr><td><b>7</b></td>
 <td><b>기계 설계 절의 active toe 서술 보강.</b> hip/knee/ankle 액추에이터에 지면을 많이 쓰고 핵심인 active toe는 짧고 대부분 [20]으로 미룸. 필요 정보: toe length, mass, RoM, joint-axis location, contact-surface geometry, torque capacity, toe 모터가 ankle·knee 토크에 기여하는 정도, 유효 감속비의 자세 의존성, [20]에서 계승/변경한 것. 일반 액추에이터 서술을 압축해 지면 확보</td>

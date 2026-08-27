@@ -423,11 +423,14 @@ where:
 
 
 \subsection{Reinforcement Learning Setup}
-To enable a fair comparison between configurations with and without the active toe, we train two variants
-under an identical setup: a model with the active toe (\emph{toe-equipped}) and one with the active toe removed
-(\emph{toe-ablation}). Both are given the same observation space---including all privileged simulation
-signals---ensuring an unbiased setup. The policy, network, and reward-function hyperparameters are summarized
-in Table~\ref{tab:rl_setup}.
+To ensure a fair training procedure between the configurations with and without the active toe,
+both models are given the same observation space. The policy, network, and reward-function
+hyperparameters are summarized in Table~\ref{tab:rl_setup}. In the toe-ablation variant the toe
+revolute joint is replaced by a fixed joint at the neutral ($0^{\circ}$) pose in the identical
+joint frame; the toe link, its mass ($0.22$~kg per foot), inertia, and all collision geometry are
+retained, so the total mass ($32.0$~kg) and the foot--ground contact geometry are unchanged. Only
+the actuated DOF is removed, which reduces the per-leg CA Jacobian of Eq.~(1) from $7\times7$ to
+$6\times6$.
 
 However, during training we observed that the policy occasionally converged to unrealistic postures that
 sustain excessive torque on specific joints. To suppress such behavior, we adopt a CBF-style soft constraint
