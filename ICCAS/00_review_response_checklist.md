@@ -57,7 +57,7 @@
 <td>✅(부분) <b>학습 시드 수 + 10 trial 변동성(std/range) 보고.</b> Table 3·4가 평균만 제시. 10회가 단일 정책 반복인지 독립 시드인지 명시. Fig. 6 음영 영역의 의미 정의. 정책 1개만 학습했다면 한계 인정. 변동성 분석 없이 "significant" 사용 금지. <b>재학습·재롤아웃 필요</b></td>
 <td>AE, R1, R2</td></tr>
 <tr><td><b>11</b></td>
-<td><b>선회 메커니즘 정량 지표 1~2개 추가.</b> toe는 sagittal 운동인데 왜 yaw 선회·path tracking이 개선되는지 미분석. 후보: yaw-rate tracking error, CoP trajectory, toe-contact duration, stance-foot slip distance, lateral GRF, torso angular-velocity variation, turning radius, lateral acceleration. 분석 없으면 결론을 "path deviation 감소" 관찰에 한정. <b>로거 확장 + 재롤아웃 필요</b></td>
+<td>✅(결론 한정으로 갈음) <b>선회 메커니즘 정량 지표 1~2개 추가.</b> toe는 sagittal 운동인데 왜 yaw 선회·path tracking이 개선되는지 미분석. 후보: yaw-rate tracking error, CoP trajectory, toe-contact duration, stance-foot slip distance, lateral GRF, torso angular-velocity variation, turning radius, lateral acceleration. 분석 없으면 결론을 "path deviation 감소" 관찰에 한정. <b>로거 확장 + 재롤아웃 필요</b></td>
 <td>AE, R1, R2</td></tr>
 </tbody>
 </table>
