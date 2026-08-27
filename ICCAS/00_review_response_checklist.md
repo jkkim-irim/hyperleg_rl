@@ -48,7 +48,7 @@
 <td><b>기계 설계 절의 active toe 서술 보강.</b> hip/knee/ankle 액추에이터에 지면을 많이 쓰고 핵심인 active toe는 짧고 대부분 [20]으로 미룸. 필요 정보: toe length, mass, RoM, joint-axis location, contact-surface geometry, torque capacity, toe 모터가 ankle·knee 토크에 기여하는 정도, 유효 감속비의 자세 의존성, [20]에서 계승/변경한 것. 일반 액추에이터 서술을 압축해 지면 확보</td>
 <td>R2</td></tr>
 <tr><td><b>8</b></td>
-<td><b>문체·용어·약어.</b> <code>"rigorously isolate"</code>, <code>"ensuring an unbiased setup"</code>, <code>"confirms"</code>, <code>"significantly improves"</code>가 근거보다 강함 → <code>"compare"</code>, <code>"using the same training procedure"</code>, <code>"suggests"</code>, <code>"showed a reduction under the evaluated conditions"</code>. "biped robot"/"bipedal robot" 표기 통일. RL·CoT·GRF 등 약어를 첫 등장 시 정의, 한 번만 쓰는 용어는 약어화 금지</td>
+<td>✅ <b>문체·용어·약어.</b> <code>"rigorously isolate"</code>, <code>"ensuring an unbiased setup"</code>, <code>"confirms"</code>, <code>"significantly improves"</code>가 근거보다 강함 → <code>"compare"</code>, <code>"using the same training procedure"</code>, <code>"suggests"</code>, <code>"showed a reduction under the evaluated conditions"</code>. "biped robot"/"bipedal robot" 표기 통일. RL·CoT·GRF 등 약어를 첫 등장 시 정의, 한 번만 쓰는 용어는 약어화 금지</td>
 <td>R2</td></tr>
 <tr><td><b>9</b></td>
 <td><b>그림 보강.</b> Fig. 6 캡션에 음영 영역이 std / standard error / range 중 무엇인지 명시(#10과 연결). Fig. 7에 축 레이블·단위, 기준 경로와 로봇 궤적 구분 표시를 넣어 본문 없이도 이해되게. <b>Fig. 7은 재플롯이 필요해 궤적 데이터에 의존</b></td>
