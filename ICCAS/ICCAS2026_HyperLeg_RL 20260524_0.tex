@@ -217,7 +217,8 @@ similar to those of humans, making it well-suited for agile and natural walking 
 power transmission via belts and linkages keeps the joints compact, enabling a wide range of motion
 (Fig. 2(c)). Figs. 2(d), (e), and (f) illustrate the actuators and power transmission mechanisms driving
 the knee, ankle, and toe, respectively. Since the ankle has two DOF, the robot uses two identical structures 
-shown in Fig. 2(e) in parallel, enabling differential actuation for ankle roll and pitch. See [20] for further details.
+shown in Fig. 2(e) in parallel, enabling differential actuation for ankle roll and pitch. The leg
+mechanism, including the active toe, is inherited unchanged from HyperLeg; see [20] for further details.
 
 Fig. 3 illustrates the structure and actual images of the three
 types of actuators developed. As shown in Fig. 3(a), the
@@ -278,7 +279,9 @@ An example of the motor torque and joint torque relationship in a walking postur
 The hip's serial connection yields a diagonal 3$\times$3 upper-left block. 
 The knee row (4th) couples all knee, ankle, and toe actuators at 31.11:1 
 reduction each, and the fifth row similarly shows ankle/toe cooperation contributing 
-to ankle pitch. This intentional coupling is termed Cooperative Actuation (CA) [23].
+to ankle pitch. The last column shows that the toe motor likewise contributes to the knee and
+ankle-pitch torques ($-31.11$ and $19.23$), so toe push-off is mechanically shared with the
+proximal joints. This intentional coupling is termed Cooperative Actuation (CA) [23].
 
 
 \section{LEARNING-BASED CONTROL}
