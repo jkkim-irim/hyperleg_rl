@@ -520,7 +520,9 @@ converging to inefficient postures.
 \subsection{Efficient Walking and Impact Absorption}
 
 To compare energy efficiency and impact absorption with and without an active toe, we performed ten
-straight-line walking trials over a 20~m path at 1.33~m/s for each configuration. In Fig.~\ref{fig:validation}, the toe-ablation
+straight-line walking trials over a 20~m path at 1.33~m/s for each configuration. Each configuration
+is a single policy trained with one random seed, and the ten trials are repeated rollouts of that
+policy; all tabulated values are means over the ten trials. In Fig.~\ref{fig:validation}, the toe-ablation
 model (bottom) shows greater knee flexion and leg lift than the toe-equipped model (top), implying
 greater energy demand without the toe.
 
@@ -583,7 +585,8 @@ impact absorption.
         \subcaption{Toe-ablation}\label{fig:cyc_breakdown_notoe}
     \end{subfigure}
 
-    \caption{Gait-cycle-averaged right-leg power per joint (top) and total breakdown (bottom).}
+    \caption{Gait-cycle-averaged right-leg power per joint (top) and total breakdown (bottom);
+    shaded bands are $\pm1$ standard deviation across gait cycles.}
     \label{fig:cycle_average}
 \end{figure}
 
