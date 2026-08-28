@@ -435,8 +435,7 @@ in the same form as the recent thermal-aware reward proposed for quadruped locom
 Table~\ref{tab:rl_setup}, $h_{i}$ denotes the safety margin of the $i$-th motor, defined as
 $h_{i} = h^{\text{th}}_{i} - \mathrm{EMA}(\tau_{i}/\tau_{\text{cont},i})^{2}$, where $\tau_{\text{cont},i}$
 is the motor continuous torque ($\tau_{\max}$ in Table~I) and $\tau_{\text{EMA}} = 3$\,s. The thresholds
-are set heuristically to $h^{\text{th}}_{i} = 0.5$ for all motors, to prevent the policy from
-converging to inefficient postures.
+are set heuristically to $h^{\text{th}}_{i} = 0.5$ for all motors.
 
 
 
