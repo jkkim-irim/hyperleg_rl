@@ -387,8 +387,8 @@ $^{\dagger}$Hip yaw / roll / pitch share values except RoM: $-35{\sim}15$ / $-5{
 \end{table}
 
 
-Fig.~\ref{fig:ca_envelopes} shows representative operating points of the ankle motors during a simulation in
-which the robot performs the agility test. Because the CA structure breaks the one-to-one mapping between motor
+Fig.~\ref{fig:ca_envelopes} shows representative operating points of the ankle motors during the agility
+test. Because the CA structure breaks the one-to-one mapping between motor
 and joint torques, the joint velocity from the simulator and the target joint torque from the policy network are
 first projected into motor space via Eqs.~(1)--(3); the motor torques are then clipped against the 4-quadrant
 torque--speed envelope using the Isaac Lab DCMotorActuator [25]; finally, the clipped motor torques are
@@ -402,10 +402,9 @@ torque:
 \end{equation}
 where $v_{m} = 0.1$~rad/s is the velocity scale that smooths the sign transition of the Coulomb term.
 
-To isolate the contribution of the active toe to energy efficiency, the common practice of
-penalizing the 2-norm of joint torques is inadequate. We instead estimate and minimize the CoT directly,
-decomposing the motor-side energy consumption during locomotion into Joule heating and the (signed) mechanical
-power:
+To isolate the contribution of the active toe to energy efficiency, we estimate and minimize the CoT
+directly, decomposing the motor-side energy consumption during locomotion into Joule heating and the
+(signed) mechanical power:
 \begin{equation}
     CoT = \frac{P_{Joule} + P_{mech}}{mgv}
     \label{eq:cot}
