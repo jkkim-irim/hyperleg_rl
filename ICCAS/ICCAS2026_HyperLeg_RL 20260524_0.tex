@@ -281,10 +281,10 @@ proximal joints. This intentional coupling is termed Cooperative Actuation (CA) 
 \section{LEARNING-BASED CONTROL}
 \subsection{Simulation Setup}
 Although learning-based control has recently overcome the limitations of traditional model-based control 
-in locomotion research, inaccurate robot dynamics and actuator models in simulators cause significant 
-sim-to-real gaps. In particular, common simulators model robots as direct-joint-actuation systems, failing to 
-faithfully reproduce parallel-linkage ankle structures [12] and CA structures like HyperLeg, thereby degrading 
-real-to-sim fidelity---the accuracy with which real hardware is reflected in simulation. Furthermore, reward 
+in locomotion research, inaccurate robot dynamics and actuator models in simulators cause
+sim-to-real gaps. In particular, common simulators model robots as direct-joint-actuation systems, failing to
+faithfully reproduce parallel-linkage ankle structures [12] and CA structures like HyperLeg, thereby degrading
+the accuracy with which real hardware is reflected in simulation. Furthermore, reward
 functions designed for energy-efficient locomotion further simplify energy consumption by 
 summing squared torques instead of using an accurate CoT. Bypassing this bottleneck by designing simpler hardware 
 reduces the sim-to-real gap but forfeits hardware advantages, limiting potential performance gains.
