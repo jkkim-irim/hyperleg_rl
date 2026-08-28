@@ -658,18 +658,15 @@ depart from the reference path more often.
 
 \section{Conclusion}
 
-This paper presented a 14-DOF bipedal robot with active toes and cooperative actuation (CA), and compared
-toe-equipped and toe-ablation configurations via reinforcement learning in the same simulation
-environment. Both variants were trained with identical objective rewards and actuator models reflecting
-coupled transmissions and measured power consumption.
+This paper presented a 14-DOF bipedal robot with active toes and CA, and compared toe-equipped and
+toe-ablation configurations trained under identical rewards and transmission-aware actuator models.
 At 1.33\,m/s walking, the toe-equipped model reduced total power by 16.9\%, CoT by 17.5\%, and
 heel-strike GRF by 5.0\%. On the Robot T-Test its average speed was 4.4\% lower, yet average and maximum
 path deviation were 25.0\% and 34.0\% smaller at essentially unchanged completion time.
 
 Although we aimed to build a realistic simulation environment, the link inertial parameters, backlash,
-belt and frame stiffness, and the foot--ground contact model have not been validated against hardware,
-and we did not test whether toe-equipped configurations yield similar benefits on other bipedal
-platforms. Refining the hardware from these simulation insights, verifying sim-to-real transfer on the
+belt and frame stiffness, and the foot--ground contact model have not been validated against
+hardware. Refining the hardware from these simulation insights, verifying sim-to-real transfer on the
 physical robot, and broader comparisons across platforms, gaits, and terrains remain future work.
 
 \section*{ACKNOWLEDGMENT}
