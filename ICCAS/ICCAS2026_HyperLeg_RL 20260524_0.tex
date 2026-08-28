@@ -238,7 +238,7 @@ generating substantial propulsive force.
 
 The Jacobian $J_m$, which represents the velocity relationship between the motors and joints, is expressed as follows:
 \begin{equation}
-    \dot{\theta} = J_m \, \dot{\phi},
+    \dot{\phi} = J_m \, \dot{\theta},
     \label{eq:jacobian}
 \end{equation}
 where $\phi, \theta \in \mathbf{R}^{7}$ are the motor and joint angle vectors, respectively.
@@ -248,14 +248,14 @@ and toe joints.
 
 The relationship between the motor torques $\tau_m$ and joint torques $\tau_{jt}$ can be expressed as:
 \begin{equation}
-    \tau_m = J_m^T \, \tau_{jt}.
+    \tau_{jt} = J_m^T \, \tau_m.
     \label{eq:torque}
 \end{equation}
 An example of the motor torque and joint torque relationship in a walking posture is given by the following equation:
 \begin{equation}
     \resizebox{0.92\columnwidth}{!}{$
     \setlength{\arraycolsep}{2pt}
-    \tau_m =
+    \tau_{jt} =
     \begin{bmatrix}
     25 & 0 & 0 & 0 & 0 & 0 & 0 \\
     0 & 25 & 0 & 0 & 0 & 0 & 0 \\
@@ -265,7 +265,7 @@ An example of the motor torque and joint torque relationship in a walking postur
     0 & 0 & 0 & 0 & 16.51 & -16.51 & 0 \\
     0 & 0 & 0 & 0 & 0 & 0 & 21.27 \\
     \end{bmatrix}
-    \tau_{jt}
+    \tau_m
     $}.
     \label{eq:walking_example}
 \end{equation}
